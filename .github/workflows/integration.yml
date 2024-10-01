@@ -1,0 +1,73 @@
+name: Integration
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  check-runners:
+    if: github.event_name == 'push'
+    name: Check Runners
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  format:
+    if: github.event_name == 'push'
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: format
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  test-kyle:
+    name: Test (Kyle)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  test-chen-don:
+    name: Test (Chen-Don)
+    runs-on: ubuntu-latest
+    needs: [lint, check-runners]
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  test-qiuda:
+    name: Test (Qiuda)
+    runs-on: ubuntu-latest
+    needs: [lint, check-runners]
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"
+
+  test-harry:
+    name: Test (Harry)
+    runs-on: ubuntu-latest
+    needs: [lint, check-runners]
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Placeholder"

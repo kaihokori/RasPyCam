@@ -1,0 +1,84 @@
+name: Deployment
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          if [ -z "${{ env.LATEST_TAG }}" ]; then
+            echo "v1" > new_tag
+          else
+            latest_version=${{ env.LATEST_TAG }}
+            version_number=${latest_version//[!0-9]/}
+            new_version=$((version_number+1))
+            echo "v$new_version" > new_tag
+          fi
+          echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
+
+      - name: Create new tag
+        run: |
+          new_tag=$(cat new_tag)
+          git tag $new_tag
+          git push origin $new_tag
+
+      - name: Simulate building executable
+        run: |
+          mkdir -p dist
+          touch dist/raspymjpeg
+
+      - name: Clone forked frontend repository
+        env:
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+        run: |
+          git clone $FORKED_REPO_URL rpi_cam_web_interface
+          cd rpi_cam_web_interface
+          git checkout -b update-raspymjpeg-${{ env.NEW_TAG }}
+
+      - name: Ensure directory exists in target
+        run: |
+          mkdir -p rpi_cam_web_interface/etc/raspymjpeg
+
+      - name: Transfer executable to forked repository
+        run: |
+          cp dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
+
+      - name: Configure git user
+        run: |
+          cd rpi_cam_web_interface
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+
+      - name: Push changes to fork
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          cd rpi_cam_web_interface
+          git add etc/raspymjpeg/raspymjpeg
+          git commit -m "Update raspymjpeg to version ${{ env.NEW_TAG }}"
+          git push https://x-access-token:${{ secrets.PAT }}@${{ secrets.FORKED_REPO_URL }} update-raspymjpeg-${{ env.NEW_TAG }}
+
+      - name: Clean up after release
+        run: |
+          rm -rf ./release ./rpi_cam_web_interface
