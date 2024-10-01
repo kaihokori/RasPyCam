@@ -53,8 +53,9 @@ jobs:
       - name: Generate GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
         run: |
-          curl -s -X POST \
+          response=$(curl -s -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/kaihokori/raspymjpeg/releases \
@@ -64,7 +65,18 @@ jobs:
               "prerelease": false,
               "draft": true,
               "generate_release_notes": true
-            }'
+            }')
+          echo "RELEASE_UPLOAD_URL=$(echo $response | jq -r '.upload_url' | sed 's/{?name,label}//')" >> $GITHUB_ENV
+
+      - name: Upload executable to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @dist/raspymjpeg \
+            "${{ env.RELEASE_UPLOAD_URL }}?name=raspymjpeg"
 
       - name: Clean up
         run: |
