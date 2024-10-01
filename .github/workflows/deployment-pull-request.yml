@@ -48,7 +48,7 @@ jobs:
       - name: Simulate building executable
         run: |
           mkdir -p dist
-          touch dist/raspymjpeg
+          echo 'testing' > dist/raspymjpeg
 
       - name: Generate GitHub release
         env:

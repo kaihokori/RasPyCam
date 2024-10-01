@@ -19,7 +19,7 @@ jobs:
       - name: Build executable
         run: |
           mkdir -p dist
-          touch dist/raspymjpeg
+          echo 'testing' > dist/raspymjpeg
 
       - name: Clone forked frontend repository
         env:
