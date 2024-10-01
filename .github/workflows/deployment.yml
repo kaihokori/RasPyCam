@@ -9,8 +9,8 @@ on:
       - '**'
 
 jobs:
-  tag_and_release:
-    name: Tag and Release
+  release:
+    name: Full Release Job
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -64,11 +64,6 @@ jobs:
               "generate_release_notes": true
             }'
 
-  update_fork:
-    name: Update Forked Frontend Repo
-    runs-on: ubuntu-latest
-    needs: tag_and_release
-    steps:
       - name: Clone forked frontend repository
         env:
           FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
@@ -101,11 +96,6 @@ jobs:
           git commit -m "Updating RasPyMJPEG to ${{ env.NEW_TAG }}"
           git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository_owner }}/rpi_cam_web_interface.git update-raspymjpeg-${{ env.NEW_TAG }}
 
-  create_pr:
-    name: Create Pull Request
-    runs-on: ubuntu-latest
-    needs: update_fork
-    steps:
       - name: Install GitHub CLI
         run: |
           sudo apt-get install -y gh
