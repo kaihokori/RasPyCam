@@ -73,11 +73,12 @@ jobs:
       - name: Push changes to fork
         env:
           PAT: ${{ secrets.PAT }}
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
           git add etc/raspymjpeg/raspymjpeg
           git commit -m "Update raspymjpeg to version ${{ env.NEW_TAG }}"
-          git push https://x-access-token:${{ secrets.PAT }}@${{ secrets.FORKED_REPO_URL }} update-raspymjpeg-${{ env.NEW_TAG }}
+          git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository_owner }}/rpi_cam_web_interface.git update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Clean up after release
         run: |
