@@ -97,6 +97,8 @@ jobs:
       - name: Stage and Commit Changes
         run: |
           cd rpi_cam_web_interface
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspymjpeg/raspymjpeg
           if git diff-index --quiet HEAD; then
             echo "No changes to commit."
