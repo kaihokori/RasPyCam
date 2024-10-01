@@ -129,12 +129,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          # Validate branch before creating the PR
-          if git rev-parse --verify update-raspymjpeg-${{ env.NEW_TAG }} >/dev/null 2>&1; then
-            gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
-          else
-            echo "Branch not found. Aborting PR creation."
-          fi
+          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head "${{ github.repository_owner }}:update-raspymjpeg-${{ env.NEW_TAG }}"
 
       - name: Clean up after release
         run: |
