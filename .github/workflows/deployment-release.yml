@@ -4,68 +4,74 @@ permissions:
   contents: write
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types:
+      - published
 
 jobs:
-  release:
-    name: Draft Release
+  pull_request:
+    name: Deploy Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-
-      - name: Bump version
-        id: bump_version
-        run: |
-          if [ -z "${{ env.LATEST_TAG }}" ]; then
-            echo "v1" > new_tag
-          else
-            version_number=$(echo "${{ env.LATEST_TAG }}" | grep -o '[0-9]*$')
-            new_version=$((version_number+1))
-            echo "v$new_version" > new_tag
-          fi
-          echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
-
-      - name: Create new tag
-        run: |
-          new_tag=$(cat new_tag)
-          if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
-            echo "Tag $new_tag already exists. Skipping tag creation."
-          else
-            git tag $new_tag
-            git push origin $new_tag
-          fi
-
-      - name: Simulate building executable
+      - name: Build executable
         run: |
           mkdir -p dist
           touch dist/raspymjpeg
 
-      - name: Generate GitHub release
+      - name: Clone forked frontend repository
+        env:
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+        run: |
+          git clone $FORKED_REPO_URL rpi_cam_web_interface
+          cd rpi_cam_web_interface
+          git checkout -b update-raspymjpeg-${{ github.event.release.tag_name }}
+
+      - name: Ensure directory exists in target
+        run: |
+          mkdir -p rpi_cam_web_interface/etc/raspymjpeg
+
+      - name: Transfer executable to forked repository
+        run: |
+          cp dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
+
+      - name: Stage, Commit, and Push Changes
+        env:
+          PAT: ${{ secrets.PAT }}
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+        run: |
+          cd rpi_cam_web_interface
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+          git add etc/raspymjpeg/raspymjpeg
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit."
+          else
+            git commit -m "Updating RasPyMJPEG to ${{ github.event.release.tag_name }}"
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+            git push origin update-raspymjpeg-${{ github.event.release.tag_name }}
+          fi
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+
+      - name: Fetch Release Notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/kaihokori/raspymjpeg/releases \
-            -d '{
-              "tag_name": "'${{ env.NEW_TAG }}'",
-              "name": "Release '${{ env.NEW_TAG }}'",
-              "prerelease": false,
-              "draft": true,
-              "generate_release_notes": true
-            }'
+          RELEASE_URL="https://api.github.com/repos/kaihokori/raspymjpeg/releases/tags/${{ github.event.release.tag_name }}"
+          curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
+
+      - name: Create Pull Request
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          gh auth login --with-token <<< "${{ secrets.PAT }}"
+          gh pr create --title "Update RasPyMJPEG to ${{ github.event.release.tag_name }}" --body "$(cat release_notes.txt)" --base main --head "kaihokori:update-raspymjpeg-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface
 
       - name: Clean up
         run: |
-          rm -rf dist new_tag
+          rm -rf ./rpi_cam_web_interface release_notes.txt dist
