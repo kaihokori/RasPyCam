@@ -1,0 +1,14 @@
+# Recordings Folder
+recordings/
+
+# Python Cache Folder and Files
+__pycache__/
+*.pyc
+
+# Python Test Cache Folder and Files
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual Environment Folder
+venv/
