@@ -17,45 +17,35 @@ jobs:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
-      # Get the latest tag and fetch all tags to ensure we are working with the latest
       - name: Get latest tag
         id: get_tag
         run: |
           git fetch --tags
-          # List all tags sorted by version number and take the first (latest) tag
           latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          echo "Latest tag: $latest_tag"
           echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
 
-      # Bump the version, incrementing based on the latest tag
       - name: Bump version
         id: bump_version
         run: |
           if [ -z "${{ env.LATEST_TAG }}" ]; then
-            # If no tag exists, start with v1
             echo "v1" > new_tag
           else
-            # Extract the numeric part of the latest tag and increment it
             version_number=$(echo "${{ env.LATEST_TAG }}" | grep -o '[0-9]*$')
             new_version=$((version_number+1))
-            echo "Bumping version to v$new_version"
             echo "v$new_version" > new_tag
           fi
           echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
 
-      # Create a new tag if it doesn't exist yet
       - name: Create new tag
         run: |
           new_tag=$(cat new_tag)
           if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
             echo "Tag $new_tag already exists. Skipping tag creation."
           else
-            echo "Creating new tag: $new_tag"
             git tag $new_tag
             git push origin $new_tag
           fi
 
-      # Simulate building executable
       - name: Simulate building executable
         run: |
           mkdir -p dist
@@ -108,9 +98,10 @@ jobs:
       - name: Push changes to fork
         env:
           PAT: ${{ secrets.PAT }}
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
-          git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository_owner }}/rpi_cam_web_interface.git update-raspymjpeg-${{ env.NEW_TAG }}
+          git push https://x-access-token:${{ secrets.PAT }}@${{ secrets.FORKED_REPO_URL }} update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Install GitHub CLI
         run: |
@@ -128,7 +119,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head "${{ github.repository_owner }}:update-raspymjpeg-${{ env.NEW_TAG }}"
+          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head "kaihokori:update-raspymjpeg-${{ env.NEW_TAG }}" --repo traitsaponin/rpi_cam_web_interface
 
       - name: Clean up after release
         run: |
