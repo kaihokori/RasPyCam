@@ -17,32 +17,46 @@ jobs:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
+      # Get the latest tag and fetch all tags to ensure we are working with the latest
       - name: Get latest tag
         id: get_tag
         run: |
           git fetch --tags
+          # Get the latest tag (sort by version number)
           latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest tag: $latest_tag"
           echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
 
+      # Bump the version, incrementing based on the latest tag
       - name: Bump version
         id: bump_version
         run: |
           if [ -z "${{ env.LATEST_TAG }}" ]; then
+            # If no tag exists, start with v1
             echo "v1" > new_tag
           else
-            latest_version=${{ env.LATEST_TAG }}
-            version_number=${latest_version//[!0-9]/}
+            # Extract the numeric part of the latest tag
+            version_number=$(echo "${{ env.LATEST_TAG }}" | grep -o '[0-9]*$')
+            # Increment the version number
             new_version=$((version_number+1))
+            echo "Bumping version to v$new_version"
             echo "v$new_version" > new_tag
           fi
           echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
 
+      # Create a new tag if it doesn't exist yet
       - name: Create new tag
         run: |
           new_tag=$(cat new_tag)
-          git tag $new_tag
-          git push origin $new_tag
+          if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
+            echo "Tag $new_tag already exists. Skipping tag creation."
+          else
+            echo "Creating new tag: $new_tag"
+            git tag $new_tag
+            git push origin $new_tag
+          fi
 
+      # Simulate building executable
       - name: Simulate building executable
         run: |
           mkdir -p dist
