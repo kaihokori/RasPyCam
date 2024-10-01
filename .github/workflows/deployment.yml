@@ -48,6 +48,22 @@ jobs:
           mkdir -p dist
           touch dist/raspymjpeg
 
+      - name: Automatically Generate GitHub Release with Notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspymjpeg/releases \
+            -d '{
+              "tag_name": "'${{ env.NEW_TAG }}'",
+              "name": "Release '${{ env.NEW_TAG }}'",
+              "prerelease": false,
+              "draft": false,
+              "generate_release_notes": true
+            }'
+
       - name: Clone forked frontend repository
         env:
           FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
@@ -77,8 +93,28 @@ jobs:
         run: |
           cd rpi_cam_web_interface
           git add etc/raspymjpeg/raspymjpeg
-          git commit -m "Update raspymjpeg to version ${{ env.NEW_TAG }}"
+          git commit -m "Updating RasPyMJPEG to ${{ env.NEW_TAG }}"
           git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository_owner }}/rpi_cam_web_interface.git update-raspymjpeg-${{ env.NEW_TAG }}
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+
+      - name: Fetch Release Notes
+        id: release_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_URL="https://api.github.com/repos/kaihokori/raspymjpeg/releases/tags/${{ env.NEW_TAG }}"
+          RELEASE_NOTES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body')
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          gh auth login --with-token <<< "${{ secrets.PAT }}"
+          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "${{ env.RELEASE_NOTES }}" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Clean up after release
         run: |
