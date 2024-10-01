@@ -1,4 +1,4 @@
-name: Deploy (Release)
+name: Deployment (Full Release)
 
 permissions:
   contents: write
