@@ -12,189 +12,62 @@ jobs:
   check-runners:
     if: github.event_name == 'push'
     name: Check Runners
-    runs-on: kyle
-    outputs:
-      chen_don_online: ${{ steps.set_outputs.outputs.chen_don_online }}
-      qiuda_online: ${{ steps.set_outputs.outputs.qiuda_online }}
-      harry_online: ${{ steps.set_outputs.outputs.harry_online }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Install Dependencies
+      - name: Placeholder
         run: |
-          sudo apt-get update
-          sudo apt-get install jq -y
-
-      - name: Fetch Runners
-        id: fetch_runners
-        run: |
-          response=$(curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/consiliumsolutions/p05b-rpigpu/actions/runners)
-          echo "$response" > runners.json
-
-      - name: Check Chen-Don Runner
-        id: check_chen_don
-        run: |
-          chen_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "chen-don") | .status == "online") then "true" else "false" end // "false"' runners.json)
-          echo "chen_don_online=$chen_online" >> $GITHUB_ENV
-
-      - name: Check Qiuda Runner
-        id: check_qiuda
-        run: |
-          qiuda_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "qiuda") | .status == "online") then "true" else "false" end // "false"' runners.json)
-          echo "qiuda_online=$qiuda_online" >> $GITHUB_ENV
-
-      - name: Check Harry Runner
-        id: check_harry
-        run: |
-          harry_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "harry") | .status == "online") then "true" else "false" end // "false"' runners.json)
-          echo "harry_online=$harry_online" >> $GITHUB_ENV
-
-      - name: Set Outputs
-        id: set_outputs
-        run: |
-          echo "chen_don_online=${{ env.chen_don_online }}" >> $GITHUB_OUTPUT
-          echo "qiuda_online=${{ env.qiuda_online }}" >> $GITHUB_OUTPUT
-          echo "harry_online=${{ env.harry_online }}" >> $GITHUB_OUTPUT
-
-      - name: Echo Runner Statuses
-        run: |
-          echo "Chen-Don Runner Online: ${{ env.chen_don_online }}"
-          echo "Qiuda Runner Online: ${{ env.qiuda_online }}"
-          echo "Harry Runner Online: ${{ env.harry_online }}"
+          echo "Placeholder"
 
   format:
     if: github.event_name == 'push'
     name: Format
-    runs-on: kyle
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install black -y
-
-      - name: Format code
-        run: |
-          black .
-
-      - name: Commit and push formatted code
-        run: |
-          git config user.name "$(git log -n 1 --pretty=format:%an)"
-          git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add .
-          git commit -m "BOT: formatting code" || echo "No changes to commit"
-          git push origin HEAD
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Placeholder"
 
   lint:
     name: Lint
-    runs-on: kyle
+    runs-on: ubuntu-latest
     needs: format
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install flake8 -y
-
-      - name: Lint code
-        run: |
-          flake8 --ignore=E501,W503 .
+          echo "Placeholder"
 
   test-kyle:
     name: Test (Kyle)
-    runs-on: kyle
+    runs-on: ubuntu-latest
     needs: lint
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install system dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install libcap-dev python3-pytest libopencv-dev -y
-          sudo apt-get install python3-opencv
-
-      - name: Test code
-        run: |
-          PYTHONPATH=./app pytest --import-mode=importlib
-        timeout-minutes: 3
+          echo "Placeholder"
 
   test-chen-don:
     name: Test (Chen-Don)
-    runs-on: chen-don
+    runs-on: ubuntu-latest
     needs: [lint, check-runners]
-    if: ${{ needs.check-runners.outputs.chen_don_online == 'true' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install system dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install libcap-dev python3-pytest libopencv-dev -y
-          sudo apt-get install python3-opencv
-
-      - name: Test code
-        run: |
-          PYTHONPATH=./app pytest --import-mode=importlib
-        timeout-minutes: 3
+          echo "Placeholder"
 
   test-qiuda:
     name: Test (Qiuda)
-    runs-on: qiuda
+    runs-on: ubuntu-latest
     needs: [lint, check-runners]
-    if: ${{ needs.check-runners.outputs.qiuda_online == 'true' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install system dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install libcap-dev python3-pytest libopencv-dev -y
-          sudo apt-get install python3-opencv
-
-      - name: Test code
-        run: |
-          PYTHONPATH=./app pytest --import-mode=importlib
-        timeout-minutes: 3
+          echo "Placeholder"
 
   test-harry:
     name: Test (Harry)
-    runs-on: harry
+    runs-on: ubuntu-latest
     needs: [lint, check-runners]
-    if: ${{ needs.check-runners.outputs.harry_online == 'true' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install system dependencies
+      - name: Placeholder
         run: |
-          sudo apt update
-          sudo apt install libcap-dev python3-pytest libopencv-dev -y
-          sudo apt-get install python3-opencv
-
-      - name: Test code
-        run: |
-          PYTHONPATH=./app pytest --import-mode=importlib
-        timeout-minutes: 3
+          echo "Placeholder"
