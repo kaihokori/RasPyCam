@@ -101,20 +101,18 @@ jobs:
           sudo apt-get install -y gh
 
       - name: Fetch Release Notes
-        id: release_notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspymjpeg/releases/tags/${{ env.NEW_TAG }}"
-          RELEASE_NOTES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body')
-          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+          curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
 
       - name: Create Pull Request
         env:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "${{ env.RELEASE_NOTES }}" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
+          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Clean up after release
         run: |
