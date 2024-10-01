@@ -92,7 +92,7 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp ../dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
+          cp dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
 
       - name: Stage and Commit Changes
         run: |
