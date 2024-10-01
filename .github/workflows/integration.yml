@@ -58,31 +58,16 @@ jobs:
     name: Test (Qiuda)
     runs-on: ubuntu-latest
     needs: [lint, check-runners]
-    if: always()
     steps:
-      - name: Skipping Qiuda Test
+      - name: Placeholder
         run: |
-          echo "Skipping Test (Qiuda)"
-        continue-on-error: true
+          echo "Placeholder"
 
   test-harry:
     name: Test (Harry)
     runs-on: ubuntu-latest
     needs: [lint, check-runners]
-    if: always()
     steps:
-      - name: Skipping Harry Test
+      - name: Placeholder
         run: |
-          echo "Skipping Test (Harry)"
-        continue-on-error: true
-
-  test-chen:
-    name: Test (Chen)
-    runs-on: ubuntu-latest
-    needs: [lint, check-runners]
-    if: always()
-    steps:
-      - name: Skipping Chen Test
-        run: |
-          echo "Skipping Test (Chen)"
-        continue-on-error: true
+          echo "Placeholder"
