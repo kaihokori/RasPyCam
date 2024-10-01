@@ -37,10 +37,7 @@ jobs:
         run: |
           cp dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
 
-      - name: Stage, Commit, and Push Changes
-        env:
-          PAT: ${{ secrets.PAT }}
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+      - name: Stage and Commit Changes
         run: |
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
@@ -50,9 +47,16 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "Updating RasPyMJPEG to ${{ github.event.release.tag_name }}"
+          fi
+
+      - name: Push changes to fork
+        env:
+            PAT: ${{ secrets.PAT }}
+            FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+        run: |
+            cd rpi_cam_web_interface
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
             git push origin update-raspymjpeg-${{ github.event.release.tag_name }}
-          fi
 
       - name: Install GitHub CLI
         run: |
