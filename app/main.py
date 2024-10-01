@@ -6,6 +6,7 @@ def main(args):
     """Main function to start the background process using provided config file."""
     config_filepath = args.config_filepath
     try:
+        print("Starting up")
         start_background_process(config_filepath)
     except KeyboardInterrupt:
         print("Server stopped.")
