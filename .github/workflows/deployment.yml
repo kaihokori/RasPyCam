@@ -97,11 +97,12 @@ jobs:
 
       - name: Push changes to fork
         env:
-          PAT: ${{ secrets.PAT }}
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+            PAT: ${{ secrets.PAT }}
+            FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
-          cd rpi_cam_web_interface
-          git push https://x-access-token:${{ secrets.PAT }}@${{ secrets.FORKED_REPO_URL }} update-raspymjpeg-${{ env.NEW_TAG }}
+            cd rpi_cam_web_interface
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+            git push origin update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Install GitHub CLI
         run: |
