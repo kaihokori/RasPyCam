@@ -78,22 +78,23 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
+          cp ../dist/raspymjpeg rpi_cam_web_interface/etc/raspymjpeg/
 
-      - name: Configure git user
+      - name: Stage and Commit Changes
         run: |
           cd rpi_cam_web_interface
-          git config user.name "$(git log -n 1 --pretty=format:%an)"
-          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+          git add etc/raspymjpeg/raspymjpeg
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit."
+          else
+            git commit -m "Updating RasPyMJPEG to ${{ env.NEW_TAG }}"
+          fi
 
       - name: Push changes to fork
         env:
           PAT: ${{ secrets.PAT }}
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
-          git add etc/raspymjpeg/raspymjpeg
-          git commit -m "Updating RasPyMJPEG to ${{ env.NEW_TAG }}"
           git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository_owner }}/rpi_cam_web_interface.git update-raspymjpeg-${{ env.NEW_TAG }}
 
       - name: Install GitHub CLI
@@ -112,7 +113,12 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
+          # Validate branch before creating the PR
+          if git rev-parse --verify update-raspymjpeg-${{ env.NEW_TAG }} >/dev/null 2>&1; then
+            gh pr create --title "Update RasPyMJPEG to ${{ env.NEW_TAG }}" --body "$(cat release_notes.txt)" --base main --head update-raspymjpeg-${{ env.NEW_TAG }}
+          else
+            echo "Branch not found. Aborting PR creation."
+          fi
 
       - name: Clean up after release
         run: |
