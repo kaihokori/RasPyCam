@@ -50,11 +50,41 @@ jobs:
           mkdir -p dist
           touch dist/raspymjpeg
 
-      - name: Generate GitHub release
+      - name: Delete old asset (raspymjpeg) from the previous release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -s -X POST \
+          # Get the ID of the previous release
+          response=$(curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspymjpeg/releases/tags/${{ env.LATEST_TAG }})
+
+          release_id=$(echo $response | jq -r '.id')
+
+          # Get the asset ID of the raspymjpeg file from the previous release
+          assets_url=$(echo $response | jq -r '.assets_url')
+          asset_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" $assets_url)
+
+          asset_id=$(echo $asset_response | jq -r '.[] | select(.name=="raspymjpeg") | .id')
+
+          # If asset_id exists, delete the asset
+          if [ -n "$asset_id" ]; then
+            curl -s -X DELETE \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/kaihokori/raspymjpeg/releases/assets/$asset_id
+            echo "Deleted old raspymjpeg asset with ID $asset_id"
+          else
+            echo "No previous raspymjpeg asset found."
+          fi
+
+      - name: Generate GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
+        run: |
+          response=$(curl -s -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/kaihokori/raspymjpeg/releases \
@@ -64,7 +94,18 @@ jobs:
               "prerelease": false,
               "draft": true,
               "generate_release_notes": true
-            }'
+            }')
+          echo "RELEASE_UPLOAD_URL=$(echo $response | jq -r '.upload_url' | sed 's/{?name,label}//')" >> $GITHUB_ENV
+
+      - name: Upload executable to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @dist/raspymjpeg \
+            "${{ env.RELEASE_UPLOAD_URL }}?name=raspymjpeg"
 
       - name: Clean up
         run: |
