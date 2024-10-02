@@ -78,15 +78,14 @@ jobs:
             ## Changes Introduced
 
             1. **Change 1:**
-            - Content 1
+             - Content 1
 
             2. **Change 2:**
-            - Content 2
+             - Content 2
 
             ## Additional Notes
 
-            - **Manual Usage:**
-            - If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README.
+            - **Manual Usage:**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README.
 
             ## Changelog
 
