@@ -43,7 +43,7 @@ jobs:
         run: |
           git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
           git fetch upstream
-          git checkout master
+          git checkout main
           git merge upstream/master --allow-unrelated-histories
 
       - name: Create new branch for update
