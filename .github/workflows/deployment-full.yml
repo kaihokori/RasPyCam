@@ -32,9 +32,9 @@ jobs:
 
       - name: Clone forked frontend repository
         env:
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
+          FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
-          git clone https://github.com/$FORKED_REPO_URL.git rpi_cam_web_interface
+          git clone https://github.com/${FORKED_REPO}.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
       - name: Add upstream repository and fetch latest changes
@@ -59,6 +59,7 @@ jobs:
       - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
+          FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
@@ -68,7 +69,7 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/$FORKED_REPO_URL.git
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${FORKED_REPO}.git
             
             git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
@@ -86,6 +87,8 @@ jobs:
           tail -n +2 release_notes.txt > release_notes_trimmed.txt
 
       - name: Create PR body file
+        env:
+          FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           echo "# Release Summary" > pr_body.txt
           echo "" >> pr_body.txt
@@ -110,14 +113,15 @@ jobs:
       - name: Create and Merge Pull Request
         env:
           PAT: ${{ secrets.PAT }}
+          FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
           gh pr create \
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
             --base main \
-            --head "${{ github.repository_owner }}:update-raspycam-${{ github.event.release.tag_name }}" \
-            --repo $FORKED_REPO_URL \
+            --head "${FORKED_REPO}:update-raspycam-${{ github.event.release.tag_name }}" \
+            --repo $FORKED_REPO \
             --assignee "@me" \
             --reviewer "@me"
           
