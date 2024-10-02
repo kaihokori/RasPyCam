@@ -31,9 +31,10 @@ jobs:
       - name: Sync fork with upstream repository
         uses: tgymnich/fork-sync@v2.0
         with:
-          github_token: ${{ secrets.PAT }}
-          upstream_repository: "traitsaponin/rpi_cam_web_interface"
-          branch: main
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          owner: kaihokori
+          base: main
+          head: main
           auto_approve: true
           auto_merge: true
 
