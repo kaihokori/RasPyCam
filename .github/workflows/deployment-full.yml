@@ -115,7 +115,14 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body-file pr_body.txt --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
+          gh pr create \
+            --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
+            --body-file pr_body.txt \
+            --base main \
+            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
+            --repo traitsaponin/rpi_cam_web_interface \
+            --draft \
+            --assignee "kaihokori"
 
       - name: Clean up
         run: |
