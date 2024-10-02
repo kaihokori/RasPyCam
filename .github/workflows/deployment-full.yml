@@ -54,6 +54,12 @@ jobs:
         run: |
           cp raspycam rpi_cam_web_interface/etc/raspycam/
 
+      - name: List uncommitted files
+        run: |
+          cd rpi_cam_web_interface
+          echo "Listing uncommitted files:"
+          git status --porcelain
+
       - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
