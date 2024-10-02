@@ -54,7 +54,11 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp raspycam rpi_cam_web_interface/etc/raspycam/
+          cp ../raspycam ./etc/raspycam/
+
+      - name: Verify file transfer (debugging step)
+        run: |
+          ls -al ./etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
