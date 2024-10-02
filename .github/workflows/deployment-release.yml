@@ -65,12 +65,91 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
 
-      - name: Create Pull Request
+      - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "$(cat release_notes.txt)" --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface
+          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "
+### Pull Request Overview
+
+**Title:** Update RasPyCam to \`${{ github.event.release.tag_name }}\`  
+**Description:** This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.
+
+---
+
+### Release Summary
+
+- **Version:** \`${{ github.event.release.tag_name }}\`
+- **Release Date:** \`${{ github.event.release.created_at }}\`
+- **Description:**
+  - {{ github.event.release.name }}
+
+---
+
+### Changes Introduced
+
+1. **Updated RasPyCam executable:**
+   - Replaced the existing RasPyCam executable with the new version located at \`etc/raspycam/raspycam\`.
+   - Ensure compatibility with the existing RPi_Cam_Web_Interface.
+
+2. **Directory Updates:**
+   - Verified that the directory \`etc/raspycam/\` exists or created it as needed.
+   - Transferred the new executable to this directory.
+
+3. **Commit Message:**
+   - Commit message: \`Updating RasPyCam to \${{ github.event.release.tag_name }}\`
+
+---
+
+### Testing & Validation
+
+The following tests have been performed to validate this update:
+
+- **Build Tests:**
+  - Confirmed the successful build of the RasPyCam executable on Ubuntu (latest).
+  
+- **Deployment Testing:**
+  - Ensured proper placement of the executable in the target directory within the \`rpi_cam_web_interface\` repository.
+  
+- **Functional Testing:**
+  - (If applicable) Outline any functional tests or performance checks that have been done to ensure the new executable works as expected.
+
+---
+
+### Additional Notes
+
+- **Automation:** This workflow is part of an automated process. Pull requests like this one will be generated automatically for each new release of RasPyCam.  
+- **Future Changes:** Please feel free to suggest improvements to the automation or deployment process if there are areas that can be streamlined for easier integration with the RPi_Cam_Web_Interface.
+
+---
+
+### Related Links
+
+- [RasPyMJPEG Release Notes](https://github.com/kaihokori/raspycam/releases/tag/\${{ github.event.release.tag_name }})
+- [RasPyMJPEG Repository](https://github.com/kaihokori/raspycam)
+- [RPi_Cam_Web_Interface](https://github.com/traitsaponin/rpi_cam_web_interface)
+
+---
+
+### Reviewer Instructions
+
+To merge this PR:
+1. Verify the changes made to the \`rpi_cam_web_interface\` repository, particularly the new RasPyCam executable.
+2. Run any necessary tests to ensure proper integration with the web interface.
+3. Once verified, merge the PR into the main branch.
+
+---
+
+### Changelog
+
+For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:
+
+\`\`\`
+$(cat release_notes.txt)
+\`\`\`
+
+          " --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
 
       - name: Clean up
         run: |
