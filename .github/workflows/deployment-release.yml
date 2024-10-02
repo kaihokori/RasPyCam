@@ -64,38 +64,36 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
 
+      - name: Create PR body file
+        run: |
+          echo "# Release Summary" > pr_body.txt
+          echo "" >> pr_body.txt
+          echo "This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository." >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Changes Introduced" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "1. **Change X:**" >> pr_body.txt
+          echo "   - [Text]" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Additional Notes" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "- **Manual Usage:**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README." >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Changelog" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "\`\`\`" >> pr_body.txt
+          cat release_notes.txt >> pr_body.txt
+          echo "\`\`\`" >> pr_body.txt
+
       - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "$(cat <<EOF
-            # Release Summary
-
-            This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.
-
-            ## Changes Introduced
-
-            1. **Change 1:**
-             - Content 1
-
-            2. **Change 2:**
-             - Content 2
-
-            ## Additional Notes
-
-            - **Manual Usage:**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README.
-
-            ## Changelog
-
-            For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:
-
-            \`\`\`
-            $(cat release_notes.txt)
-            \`\`\`
-            EOF
-                    )" --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
+          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body-file pr_body.txt --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
 
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam
+          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt

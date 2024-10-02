@@ -76,7 +76,7 @@ jobs:
           curl -s --data-binary @dist/raspycam \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam-executable"
+            "$upload_url?name=raspycam"
 
       - name: Clean up
         run: |
