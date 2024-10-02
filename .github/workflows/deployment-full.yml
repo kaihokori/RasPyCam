@@ -48,6 +48,7 @@ jobs:
       - name: Create new branch for update
         run: |
           git checkout -b update-raspycam-${{ github.event.release.tag_name }}
+          echo "Created branch update-raspycam-${{ github.event.release.tag_name }}"
 
       - name: Ensure directory exists in target
         run: |
@@ -79,6 +80,7 @@ jobs:
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
             
+            # Push the branch to origin, ensuring it is correctly set up with the branch name
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
