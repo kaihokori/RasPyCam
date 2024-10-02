@@ -92,7 +92,7 @@ jobs:
       - name: Build executable
         run: |
           mkdir -p dist
-          echo 'This step will be replaced with the actual executable...' > dist/raspycam
+          echo 'This step will be replaced with the actual executable' > dist/raspycam
 
       - name: Generate GitHub draft release
         id: create_release
