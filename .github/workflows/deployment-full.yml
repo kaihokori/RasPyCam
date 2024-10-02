@@ -127,8 +127,7 @@ jobs:
             --base main \
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
-            --draft \
-            --assignee "kaihokori"
+            --draft
 
       - name: Clean up
         run: |
