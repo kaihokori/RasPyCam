@@ -45,11 +45,6 @@ jobs:
             git push origin $new_tag
           fi
 
-      - name: Simulate building executable
-        run: |
-          mkdir -p dist
-          echo 'testing' > dist/raspycam
-
       - name: Generate GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
