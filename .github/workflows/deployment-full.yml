@@ -45,17 +45,13 @@ jobs:
           git checkout main
           git reset --hard upstream/main
 
-      - name: Create new branch for update
-        run: |
-          git checkout -b update-raspycam-${{ github.event.release.tag_name }}
-
       - name: Ensure directory exists in target
         run: |
           mkdir -p rpi_cam_web_interface/etc/raspycam
 
       - name: Transfer executable to forked repository
         run: |
-          cp raspycam rpi_cam_web_interface/etc/raspycam/
+          cp ../raspycam rpi_cam_web_interface/etc/raspycam/  # Ensure proper path reference
 
       - name: List uncommitted files
         run: |
@@ -63,12 +59,12 @@ jobs:
           echo "Listing uncommitted files:"
           git status --porcelain
 
-      - name: Stage, Commit, and Push Changes
+      - name: Create new branch, Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
+          git checkout -b update-raspycam-${{ github.event.release.tag_name }}  # Create the new branch
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspycam/raspycam
@@ -78,7 +74,6 @@ jobs:
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
-            
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
