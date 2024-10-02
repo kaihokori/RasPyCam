@@ -16,21 +16,10 @@ jobs:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PAT }}
-        run: |
-          echo $GH_TOKEN | gh auth login --with-token
-
       - name: Download executable from release
         run: |
-          mkdir -p dist
-          gh release download ${{ github.event.release.tag_name }} --repo kaihokori/raspycam --pattern 'raspycam' --dir dist
+          release_url=$(curl -s https://api.github.com/repos/kaihokori/raspycam/releases/latest | jq -r '.assets[] | select(.name == "raspycam-executable") | .browser_download_url')
+          curl -L $release_url -o raspycam
 
       - name: Clone forked frontend repository
         env:
@@ -46,7 +35,7 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp dist/raspycam rpi_cam_web_interface/etc/raspycam/
+          cp raspycam rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -63,7 +52,6 @@ jobs:
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
             git push origin update-raspycam-${{ github.event.release.tag_name }}
-          fi
 
       - name: Install GitHub CLI
         run: |
@@ -82,32 +70,32 @@ jobs:
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
           gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "$(cat <<EOF
-                # Release Summary
+            # Release Summary
 
-                This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.
+            This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.
 
-                ## Changes Introduced
+            ## Changes Introduced
 
-                1. **Change 1:**
-                 - Content 1
+            1. **Change 1:**
+             - Content 1
 
-                2. **Change 2:**
-                 - Content 2
+            2. **Change 2:**
+             - Content 2
 
-                ## Additional Notes
+            ## Additional Notes
 
-                - **Manual Usage:**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README.
+            - **Manual Usage:**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README.
 
-                ## Changelog
+            ## Changelog
 
-                For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:
+            For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:
 
-                \`\`\`
-                $(cat release_notes.txt)
-                \`\`\`
-                EOF
-                        )" --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
+            \`\`\`
+            $(cat release_notes.txt)
+            \`\`\`
+            EOF
+                    )" --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
 
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt dist
+          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam
