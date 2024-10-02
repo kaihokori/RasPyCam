@@ -39,7 +39,7 @@ class CameraCoreModel:
             "lapse_output_path": "/tmp/media/tl_%i_%t_%Y%M%D_%h%m%s.jpg",
             "video_output_path": "/tmp/media/vi_%v_%Y%M%D_%h%m%s.mp4",
             "media_path": "/tmp/media",
-            "status_file": "/tmp/status_mjpeg.txt",
+            "status_file": "/tmp/status_cam.txt",
             "control_file": "/tmp/FIFO",
             "motion_pipe": "/tmp/motionFIFO",
             "video_width": 1920,
