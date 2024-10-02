@@ -16,7 +16,7 @@ jobs:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
-      - name: Delete all draft releases and their tags
+      - name: Delete draft releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -28,7 +28,6 @@ jobs:
           if [ -n "$releases" ]; then
             echo "$releases" | while read -r release_id && read -r tag_name; do
               echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
-              # Delete release
               curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
                 https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
