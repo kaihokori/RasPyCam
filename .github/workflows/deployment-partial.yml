@@ -48,7 +48,7 @@ jobs:
       - name: Build executable
         run: |
           mkdir -p dist
-          echo 'testing' > dist/raspycam
+          echo 'testing 2' > dist/raspycam
 
       - name: Generate GitHub draft release
         id: create_release
