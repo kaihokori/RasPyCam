@@ -2,6 +2,8 @@ name: Deployment (Full Release)
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
 
 on:
   release:
@@ -32,15 +34,15 @@ jobs:
         env:
           FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
-          git clone $FORKED_REPO_URL rpi_cam_web_interface
+          git clone https://github.com/$FORKED_REPO_URL.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
-      - name: Add upstream repository, fetch latest changes, and rebase
+      - name: Add upstream repository and fetch latest changes
         run: |
-          git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
+          git remote add upstream https://github.com/silvanmelchior/rpi_cam_web_interface.git
           git fetch upstream
           git checkout main
-          git rebase upstream/main
+          git merge upstream/main --allow-unrelated-histories
 
       - name: Create new branch for update
         run: |
@@ -52,13 +54,12 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp raspycam rpi_cam_web_interface/etc/raspycam/
+          cp ../raspycam rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
         run: |
-          cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspycam/raspycam
@@ -67,9 +68,7 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
-            
-            git branch -M update-raspycam-${{ github.event.release.tag_name }}
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/$FORKED_REPO_URL.git
             
             git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
@@ -85,7 +84,7 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
           tail -n +2 release_notes.txt > release_notes_trimmed.txt
-        
+
       - name: Create PR body file
         run: |
           echo "# Release Summary" > pr_body.txt
@@ -105,11 +104,10 @@ jobs:
           echo "" >> pr_body.txt
           echo "For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:" >> pr_body.txt
           echo "" >> pr_body.txt
-          echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt
 
-      - name: Create Draft Pull Request
+      - name: Create and Merge Pull Request
         env:
           PAT: ${{ secrets.PAT }}
         run: |
@@ -118,9 +116,13 @@ jobs:
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
             --base main \
-            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
-            --repo traitsaponin/rpi_cam_web_interface \
-            --draft
+            --head "${{ github.repository_owner }}:update-raspycam-${{ github.event.release.tag_name }}" \
+            --repo $FORKED_REPO_URL \
+            --assignee "@me" \
+            --reviewer "@me"
+          
+          gh pr merge \
+            --auto --squash --delete-branch
 
       - name: Clean up
         run: |
