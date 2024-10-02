@@ -229,7 +229,7 @@ def start_background_process(config_filepath):
     Args:
         config_filepath: Path to the configuration file.
     """
-    print("Starting RasPyMJPEG main process...")
+    print("Starting RasPyCam main process...")
     all_cameras = (
         Picamera2.global_camera_info()
     )  # Get information about attached cameras
