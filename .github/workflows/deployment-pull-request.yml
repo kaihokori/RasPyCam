@@ -48,18 +48,29 @@ jobs:
       - name: Build executable
         run: |
           mkdir -p dist
-          # Replace the following line with your actual build command
           echo 'testing' > dist/raspycam
 
-      - name: Create GitHub Release and Upload Asset
-        uses: softprops/action-gh-release@v1
+      - name: Upload executable to release
+        uses: actions/upload-artifact@v3
         with:
-          files: dist/raspycam
-          tag_name: ${{ env.NEW_TAG }}
-          name: Release ${{ env.NEW_TAG }}
-          draft: true
+          name: raspycam-executable
+          path: dist/raspycam
+
+      - name: Generate GitHub draft release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            -d '{
+              "tag_name": "'${{ env.NEW_TAG }}'",
+              "name": "Release '${{ env.NEW_TAG }}'",
+              "prerelease": false,
+              "draft": true,
+              "generate_release_notes": true
+            }'
 
       - name: Clean up
         run: |
