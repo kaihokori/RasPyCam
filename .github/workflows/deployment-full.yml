@@ -31,12 +31,10 @@ jobs:
       - name: Sync fork with upstream repository
         uses: tgymnich/fork-sync@v2.0
         with:
-          token: ${{ secrets.PERSONAL_TOKEN }}
           owner: kaihokori
           base: main
           head: main
-          auto_approve: true
-          auto_merge: true
+          token: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Clone forked frontend repository
         env:
