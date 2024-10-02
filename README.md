@@ -1,12 +1,5 @@
 <p align="center"><img src="https://github.com/user-attachments/assets/d634bc77-e3c0-43f4-958c-3c3a0b03a2d6" height="110px" alt="RasPyCam Logo"></p>
 
-<p align="center">
-<img src="https://github.com/kaihokori/raspymjpeg/actions/workflows/integration.yml/badge.svg" height="20px">
-<img src="https://github.com/kaihokori/raspymjpeg/actions/workflows/deployment-release.yml/badge.svg" height="20px">
-</p>
-
-<hr>
-
 <h1>Table of Contents</h1>
 
 - [Overview](#overview)
