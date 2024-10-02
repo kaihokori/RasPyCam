@@ -52,13 +52,13 @@ jobs:
 
       - name: Ensure directory exists in target
         run: |
-          mkdir -p rpi_cam_web_interface/etc/raspycam
+          mkdir -p etc/raspycam
 
       - name: Transfer executable to forked repository
         run: |
           pwd
-          ls -l
-          cp raspycam ./etc/raspycam/
+          ls
+          mv raspycam ./etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
