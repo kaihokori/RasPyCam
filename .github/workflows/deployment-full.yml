@@ -34,7 +34,7 @@ jobs:
         env:
           FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
-          git clone $FORKED_REPO_URL rpi_cam_web_interface
+          git clone https://github.com/$FORKED_REPO_URL.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
       - name: Add upstream repository and fetch latest changes
@@ -68,7 +68,7 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/$FORKED_REPO_URL.git
             
             git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
@@ -116,8 +116,8 @@ jobs:
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
             --base main \
-            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
-            --repo kaihokori/rpi_cam_web_interface \
+            --head "${{ github.repository_owner }}:update-raspycam-${{ github.event.release.tag_name }}" \
+            --repo $FORKED_REPO_URL \
             --assignee "@me" \
             --reviewer "@me"
           
