@@ -39,8 +39,11 @@ jobs:
         run: |
           git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
           git fetch upstream
+
+      - name: Reset local repository to match upstream
+        run: |
           git checkout main
-          git merge upstream/main
+          git reset --hard upstream/main
 
       - name: Create new branch for update
         run: |
@@ -75,8 +78,6 @@ jobs:
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
-            
-            git branch -M update-raspycam-${{ github.event.release.tag_name }}
             
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
