@@ -54,7 +54,7 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp ../raspycam rpi_cam_web_interface/etc/raspycam/
+          cp raspycam rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -81,6 +81,7 @@ jobs:
       - name: Fetch Release Notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
@@ -121,7 +122,7 @@ jobs:
             --body-file pr_body.txt \
             --base main \
             --head "${FORKED_REPO}:update-raspycam-${{ github.event.release.tag_name }}" \
-            --repo $FORKED_REPO \
+            --repo ${{ secrets.FORKED_REPO }} \
             --assignee "@me" \
             --reviewer "@me"
           
