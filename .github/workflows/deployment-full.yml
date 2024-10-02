@@ -30,8 +30,6 @@ jobs:
           
           chmod +x raspycam
 
-          pwd
-
       - name: Clone forked frontend repository
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
@@ -56,8 +54,6 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          pwd
-          ls
           mv raspycam ./etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
@@ -73,7 +69,9 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${FORKED_REPO}.git
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+            
+            git branch -M update-raspycam-${{ github.event.release.tag_name }}
             
             git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
