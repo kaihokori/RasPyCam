@@ -68,7 +68,8 @@ jobs:
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspycam/raspycam
           if git diff-index --quiet HEAD; then
-            echo "No changes to commit."
+            echo "No changes to commit, exiting."
+            exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
