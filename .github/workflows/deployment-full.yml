@@ -88,12 +88,13 @@ jobs:
         run: |
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
-
+          tail -n +2 release_notes.txt > release_notes_trimmed.txt
+        
       - name: Create PR body file
         run: |
           echo "# Release Summary" > pr_body.txt
           echo "" >> pr_body.txt
-          echo "This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyCam](https://github.com/kaihokori/raspycam) repository." >> pr_body.txt
+          echo "This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository." >> pr_body.txt
           echo "" >> pr_body.txt
           echo "## Changes Introduced" >> pr_body.txt
           echo "" >> pr_body.txt
@@ -106,11 +107,11 @@ jobs:
           echo "" >> pr_body.txt
           echo "## Changelog" >> pr_body.txt
           echo "" >> pr_body.txt
-          echo "The following is copied from the \`${{ github.event.release.tag_name }}\` release notes for the [RasPyCam](https://github.com/kaihokori/raspycam) application:" >> pr_body.txt
+          echo "For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:" >> pr_body.txt
           echo "" >> pr_body.txt
           echo "" >> pr_body.txt
-          cat release_notes.txt >> pr_body.txt
-          echo "" >> pr_body.txt
+          cat release_notes_trimmed.txt >> pr_body.txt
+          echo "" >> pr_body.txt        
 
       - name: Create Draft Pull Request
         env:
