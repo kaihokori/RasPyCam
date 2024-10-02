@@ -41,7 +41,7 @@ jobs:
 
       - name: Add upstream repository and fetch latest changes
         run: |
-          git remote add upstream https://github.com/silvanmelchior/rpi_cam_web_interface.git
+          git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
           git fetch upstream
           git checkout master
           git merge upstream/master --allow-unrelated-histories
