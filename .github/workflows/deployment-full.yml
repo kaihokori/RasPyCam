@@ -27,14 +27,6 @@ jobs:
           curl -L -o raspycam -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
           
           chmod +x raspycam
-      
-      - name: Sync fork with upstream repository
-        uses: tgymnich/fork-sync@v2.0
-        with:
-          owner: kaihokori
-          base: main
-          head: main
-          token: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Clone forked frontend repository
         env:
@@ -42,29 +34,29 @@ jobs:
         run: |
           git clone $FORKED_REPO_URL rpi_cam_web_interface
           cd rpi_cam_web_interface
-      
+
+      - name: Add upstream repository, fetch latest changes, and rebase
+        run: |
+          git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
+          git fetch upstream
+          git checkout main
+          git rebase upstream/main
+
       - name: Create new branch for update
         run: |
           git checkout -b update-raspycam-${{ github.event.release.tag_name }}
-      
+
       - name: Ensure directory exists in target
         run: |
           mkdir -p rpi_cam_web_interface/etc/raspycam
-      
+
       - name: Transfer executable to forked repository
         run: |
           cp raspycam rpi_cam_web_interface/etc/raspycam/
-      
-      - name: List uncommitted files
-        run: |
-          cd rpi_cam_web_interface
-          echo "Listing uncommitted files:"
-          git status --porcelain
-      
+
       - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
-          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
@@ -115,8 +107,8 @@ jobs:
           echo "" >> pr_body.txt
           echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
-          echo "" >> pr_body.txt        
-      
+          echo "" >> pr_body.txt
+
       - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
@@ -129,7 +121,7 @@ jobs:
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
             --draft
-      
+
       - name: Clean up
         run: |
           rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
