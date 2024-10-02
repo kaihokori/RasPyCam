@@ -35,6 +35,7 @@ jobs:
           upstream_repository: "traitsaponin/rpi_cam_web_interface"
           branch: main
           auto_approve: true
+          auto_merge: true
 
       - name: Clone forked frontend repository
         env:
