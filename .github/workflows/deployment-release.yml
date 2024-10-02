@@ -70,48 +70,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
-          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "
-# Release Summary
-
-This PR updates the RasPyCam executable to the latest version `${{ github.event.release.tag_name }}`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.
-
-## Changes Introduced
-
-1. **Change 1:**
-   - Content 1
-
-2. **Change 2:**
-    - Content 2
-
-## Testing & Validation
-
-> [!NOTE]
-> This section will not be included in future releases. This section is only included for the initial release to provide context on the testing process.
-
-The following tests have been performed to validate this update:
-
-- **Manual Tests:**
-  - The updated RasPyCam executable has been tested on a Raspberry Pi device both in standalone mode and in conjunction with the RPi_Cam_Web_Interface. The executable has been verified to be working as expected.
-  
-- **Automated Testing:**
-  - Unit tests have been run to ensure that individual components of the executable are functioning correctly. All tests have passed successfully. 
-  - Integration tests have been run to ensure that the executable integrates seamlessly with the RPi_Cam_Web_Interface. All tests have passed successfully.
-  - End-to-end tests have been run to ensure that the executable performs as expected in a real-world scenario. All tests have passed successfully.
-
-## Additional Notes
-
-- **Automation:** This pull request was generated as part of an automated process. Similar draft pull requests will be automatically created for each new release of RasPyCam. Note that the draft pull request will continue to be manually reviewed before changing the status to `Ready for Review`. 
-- **Future Changes:** Please feel free to suggest improvements to the automation or deployment process if there are areas that can be streamlined for easier integration with the RPi_Cam_Web_Interface repository.
-
-## Changelog
-
-For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:
-
-\`\`\`
-$(cat release_notes.txt)
-\`\`\`
-
-          " --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
+          gh pr create --title "Update RasPyCam to ${{ github.event.release.tag_name }}" --body "# Release Summary\n\nThis PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyMJPEG](https://github.com/kaihokori/raspycam) repository.\n\n## Changes Introduced\n\n1. **Change 1:**\n   - Content 1\n\n2. **Change 2:**\n   - Content 2\n\n## Testing & Validation\n\n> [!NOTE]\n> This section will not be included in future releases. This section is only included for the initial release to provide context on the testing process.\n\nThe following tests have been performed to validate this update:\n\n- **Manual Tests:**\n  - The updated RasPyCam executable has been tested on a Raspberry Pi device both in standalone mode and in conjunction with the RPi_Cam_Web_Interface. The executable has been verified to be working as expected.\n  \n- **Automated Testing:**\n  - Unit tests have been run to ensure that individual components of the executable are functioning correctly. All tests have passed successfully.\n  - Integration tests have been run to ensure that the executable integrates seamlessly with the RPi_Cam_Web_Interface. All tests have passed successfully.\n  - End-to-end tests have been run to ensure that the executable performs as expected in a real-world scenario. All tests have passed successfully.\n\n## Additional Notes\n\n- **Automation:** This pull request was generated as part of an automated process. Similar draft pull requests will be automatically created for each new release of RasPyCam. Note that the draft pull request will continue to be manually reviewed before changing the status to \`Ready for Review\`.\n- **Future Changes:** Please feel free to suggest improvements to the automation or deployment process if there are areas that can be streamlined for easier integration with the RPi_Cam_Web_Interface repository.\n\n## Changelog\n\nFor a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:\n\n\`\`\`\n$(cat release_notes.txt)\n\`\`\`\n" --base main --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" --repo traitsaponin/rpi_cam_web_interface --draft
 
       - name: Clean up
         run: |
