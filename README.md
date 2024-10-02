@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/user-attachments/assets/d634bc77-e3c0-43f4-958c-3c3a0b03a2d6" height="100px" alt="RasPyCam Logo"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/d634bc77-e3c0-43f4-958c-3c3a0b03a2d6" height="90px" alt="RasPyCam Logo"></p>
 
 <h1>Table of Contents</h1>
 
