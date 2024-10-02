@@ -1,4 +1,4 @@
-name: Deployment (Draft Release)
+name: Deployment (Partial Release)
 
 permissions:
   contents: write
@@ -10,7 +10,7 @@ on:
 
 jobs:
   release:
-    name: Draft Release
+    name: Partial Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout backend repository
