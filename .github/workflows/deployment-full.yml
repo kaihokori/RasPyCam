@@ -56,25 +56,46 @@ jobs:
         run: |
           mv raspycam ./etc/raspycam/
 
+      - name: Adding Identity
+        run: |
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+
+      - name: Adding file
+        run: |
+          git add etc/raspycam/raspycam
+
+      - name: Checking diff
+        run: |
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit, exiting."
+            exit 0
+          else
+            echo "Something should be committed."
+          fi
+
+      - name: Comitting
+        run: |
+          git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
+
+      - name: Setting Remote
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+
+      - name: Branching
+        run: |
+          git branch -M update-raspycam-${{ github.event.release.tag_name }}
+
+      - name: Pushing
+        run: |
+          git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
+
       - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
-          git config user.name "$(git log -n 1 --pretty=format:%an)"
-          git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/raspycam
-          if git diff-index --quiet HEAD; then
-            echo "No changes to commit, exiting."
-            exit 0
-          else
-            git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
-            
-            git branch -M update-raspycam-${{ github.event.release.tag_name }}
-            
-            git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
-          fi
+          echo "Placeholder for now."
 
       - name: Install GitHub CLI
         run: |
