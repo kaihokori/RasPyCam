@@ -27,44 +27,38 @@ jobs:
           curl -L -o raspycam -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
           
           chmod +x raspycam
-
       - name: Clone forked frontend repository
         env:
           FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           git clone $FORKED_REPO_URL rpi_cam_web_interface
           cd rpi_cam_web_interface
-
       - name: Add upstream repository and fetch latest changes
         run: |
           git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
           git fetch upstream
-
-      - name: Reset local repository to match upstream
-        run: |
           git checkout main
-          git reset --hard upstream/main
-
+          git merge upstream/main
+      - name: Create new branch for update
+        run: |
+          git checkout -b update-raspycam-${{ github.event.release.tag_name }}
       - name: Ensure directory exists in target
         run: |
           mkdir -p rpi_cam_web_interface/etc/raspycam
-
       - name: Transfer executable to forked repository
         run: |
-          cp ../raspycam rpi_cam_web_interface/etc/raspycam/  # Ensure proper path reference
-
+          cp raspycam rpi_cam_web_interface/etc/raspycam/
       - name: List uncommitted files
         run: |
           cd rpi_cam_web_interface
           echo "Listing uncommitted files:"
           git status --porcelain
-
-      - name: Create new branch, Stage, Commit, and Push Changes
+      - name: Stage, Commit, and Push Changes
         env:
           PAT: ${{ secrets.PAT }}
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
           cd rpi_cam_web_interface
-          git checkout -b update-raspycam-${{ github.event.release.tag_name }}  # Create the new branch
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspycam/raspycam
@@ -74,13 +68,14 @@ jobs:
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
+            
+            git branch -M update-raspycam-${{ github.event.release.tag_name }}
+            
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get install -y gh
-
       - name: Fetch Release Notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +106,6 @@ jobs:
           echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt        
-
       - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
@@ -124,7 +118,6 @@ jobs:
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
             --draft
-
       - name: Clean up
         run: |
           rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
