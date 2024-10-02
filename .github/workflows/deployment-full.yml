@@ -38,6 +38,16 @@ jobs:
         run: |
           git clone $FORKED_REPO_URL rpi_cam_web_interface
           cd rpi_cam_web_interface
+
+      - name: Add upstream repository and fetch latest changes
+        run: |
+          git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
+          git fetch upstream
+          git checkout main
+          git merge upstream/main
+
+      - name: Create new branch for update
+        run: |
           git checkout -b update-raspycam-${{ github.event.release.tag_name }}
 
       - name: Ensure directory exists in target
