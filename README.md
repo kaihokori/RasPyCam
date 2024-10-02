@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/user-attachments/assets/d634bc77-e3c0-43f4-958c-3c3a0b03a2d6" height="110px" alt="RasPyCam Logo"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/d634bc77-e3c0-43f4-958c-3c3a0b03a2d6" height="100px" alt="RasPyCam Logo"></p>
 
 <h1>Table of Contents</h1>
 
@@ -122,10 +122,10 @@ This command will run the testing suite and generate a coverage report. You can 
 The development of this project was inspired by the [RasPiCam](https://github.com/silvanmelchior/userland/tree/master/host_applications/linux/apps/raspicam) application developed by [Silvan Melchior](https://github.com/silvanmelchior). 
 
 Initially devleoped as part of a University project overseen by [Cian Byrne](https://github.com/wallarug), the development team consisted of: 
-- [Harry Le (Lê Thành Nhân)](https://github.com/NhanDotJS)
-- [Qiuda (Richard) Song](https://github.com/RichardQiudaSong)
-- [Chen-Don Loi](https://github.com/Chen-Loi)
 - [Kyle Graham](https://github.com/kaihokori)
+- [Harry Le (Lê Thành Nhân)](https://github.com/NhanDotJS)
+- [Chen-Don Loi](https://github.com/Chen-Loi)
+- [Qiuda (Richard) Song](https://github.com/RichardQiudaSong)
 
 <h1>License</h1>
 
