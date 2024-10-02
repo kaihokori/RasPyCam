@@ -63,6 +63,7 @@ jobs:
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/kaihokori/rpi_cam_web_interface.git
             git push origin update-raspycam-${{ github.event.release.tag_name }}
+          fi
 
       - name: Install GitHub CLI
         run: |
