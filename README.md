@@ -80,7 +80,7 @@ If the program is initated without a specified configuration file, the program w
 | Preview | /tmp/preview/cam_preview.jpg |
 | Videos | /tmp/media/vi_%v_%Y%M%D_%h%m%s.mp4 |
 | Stills | /tmp/media/im_%i_%Y%M%D_%h%m%s.jpg |
-| Status File | /tmp/status_mjpeg.txt |
+| Status File | /tmp/status_cam.txt |
 
 > Command names and parameters have been named in accordance with the [RPi Cam Web Interface](https://github.com/silvanmelchior/RPi_Cam_Web_Interface) system to ensure compatibility.
 
