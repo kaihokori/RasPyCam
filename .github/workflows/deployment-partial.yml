@@ -106,6 +106,11 @@ jobs:
         run: |
           pyinstaller --onedir --noconfirm raspycam.py
 
+      - name: Package the executable
+        run: |
+          cd dist
+          zip -r raspycam.zip raspycam
+
       - name: Generate GitHub draft release
         id: create_release
         env:
@@ -129,11 +134,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @dist/raspycam \
+          curl -s --data-binary @dist/raspycam.zip \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam"
+            "$upload_url?name=raspycam.zip"
 
       - name: Clean up
         run: |
-          rm -rf dist new_tag upload_url.txt hi.py build __pycache__ hi.spec
+          rm -rf dist new_tag upload_url.txt raspycam.py build __pycache__ raspycam.spec
