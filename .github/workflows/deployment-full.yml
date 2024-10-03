@@ -43,6 +43,7 @@ jobs:
       - name: Sync fork with upstream using GitHub CLI
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           cd rpi_cam_web_interface
           gh repo sync $FORKED_REPO --source traitsaponin/rpi_cam_web_interface --branch main
