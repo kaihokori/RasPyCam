@@ -73,11 +73,17 @@ jobs:
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add etc/raspycam/
+          
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
+            
+            # Fetch the latest changes to ensure the local branch is up to date
+            git pull --rebase origin main
+            
+            # Push changes
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
