@@ -122,7 +122,7 @@ jobs:
           echo "Pull request created: $PR_URL"
 
           # Auto-merge the pull request
-          gh pr merge --squash --auto --repo traitsaponin/rpi_cam_web_interface $PR_URL
+          # gh pr merge --squash --auto --repo traitsaponin/rpi_cam_web_interface $PR_URL
 
       - name: Clean up
         run: |
