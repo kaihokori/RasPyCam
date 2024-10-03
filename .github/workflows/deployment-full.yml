@@ -35,18 +35,17 @@ jobs:
           
       - name: Clone forked frontend repository
         env:
-          FORKED_REPO: ${{ secrets.FORKED_REPO }}
+          FORKED_REPO_URL: ${{ secrets.FORKED_REPO_URL }}
         run: |
-          git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }} rpi_cam_web_interface
+          git clone $FORKED_REPO_URL rpi_cam_web_interface
           cd rpi_cam_web_interface
-          
-      - name: Sync forked frontend repository
-        env:
-          GH_TOKEN: ${{ secrets.PAT }}
+
+      - name: Add upstream repository and fetch latest changes
         run: |
-          gh repo sync kaihokori/rpi_cam_web_interface -b main
-          git fetch
-          git pull origin main
+          git remote add upstream https://github.com/traitsaponin/rpi_cam_web_interface.git
+          git fetch upstream
+          git checkout main
+          git merge upstream/main
 
       - name: Create new branch for update
         run: |
@@ -79,7 +78,7 @@ jobs:
             
             git branch -M update-raspycam-${{ github.event.release.tag_name }}
             
-            git push --force --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
+            git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
       - name: Fetch Release Notes
@@ -109,6 +108,7 @@ jobs:
           echo "" >> pr_body.txt
           echo "For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:" >> pr_body.txt
           echo "" >> pr_body.txt
+          echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt
 
@@ -127,4 +127,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam.zip pr_body.txt raspycam_unzipped
+          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
