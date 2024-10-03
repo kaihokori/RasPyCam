@@ -90,13 +90,13 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
-          pyinstaller raspymjpeg.spec --noconfirm
+          pyinstaller raspycam.spec --noconfirm
 
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          cp -r dist/raspymjpeg ./release/raspymjpeg
-          tar -czvf release/raspymjpeg.tar.gz -C release raspymjpeg
+          cp -r dist/raspycam ./release/raspycam
+          tar -czvf release/raspycam.tar.gz -C release raspycam
 
       - name: Generate GitHub draft release
         id: create_release
@@ -121,10 +121,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @dist/raspycam.zip \
+          curl -s --data-binary @release/raspycam.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam.tar.gz"
+            "$upload_url?name=raspycam.tar.gz"        
 
       - name: Clean up
         run: |
