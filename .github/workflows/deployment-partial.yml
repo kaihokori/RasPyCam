@@ -96,7 +96,7 @@ jobs:
 
       - name: Create Python script
         run: |
-          echo 'print("Hi")' > raspycam.py
+          echo 'print("Hi!")' > raspycam.py
 
       - name: Set up pyinstaller
         run: |
