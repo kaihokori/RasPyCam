@@ -11,8 +11,7 @@ on:
 jobs:
   pull_request:
     name: Full Release
-    runs-on: ubuntu-latest
-
+    runs-on: pi-five
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -26,23 +25,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-multiarch.tar.gz") | .browser_download_url')
-          curl -L -o raspycam-multiarch.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-
-      - name: Unzip downloaded executable
+          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.tar.gz") | .browser_download_url')
+          curl -L -o raspycam.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
+          
+      - name: Uncompress downloaded executable
         run: |
           mkdir raspycam_unzipped
-          tar -xzvf raspycam-multiarch.tar.gz -C raspycam_unzipped
-
+          tar -xzf raspycam.tar.gz -C raspycam_unzipped
+          
       - name: Clone forked frontend repository
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
-          pwd
-          echo
-          ls
 
       - name: Sync fork with upstream using GitHub CLI
         env:
@@ -60,12 +56,9 @@ jobs:
         run: |
           rm -rf etc/raspycam
 
-      - name: Move executables to target directory
+      - name: Move executable to target directory
         run: |
-          pwd
-          echo
-          ls
-          cp -r raspycam_unzipped/raspycam-* rpi_cam_web_interface/etc/raspycam/
+          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -75,13 +68,16 @@ jobs:
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/
+          git add etc/raspycam/raspycam
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git
+            
+            git branch -M update-raspycam-${{ github.event.release.tag_name }}
+            
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
@@ -92,7 +88,7 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
           tail -n +2 release_notes.txt > release_notes_trimmed.txt
-
+        
       - name: Create PR body file
         run: |
           echo "# Release Summary" > pr_body.txt
@@ -115,7 +111,6 @@ jobs:
           echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt
-
       - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
@@ -128,7 +123,7 @@ jobs:
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
             --draft
-
+            
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
+          rm -rf raspycam_unzipped raspycam.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
