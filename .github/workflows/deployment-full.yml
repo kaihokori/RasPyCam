@@ -44,7 +44,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          gh repo sync kaihokori/rpi_cam_web_interface --branch main --source-branch main
+          gh repo sync kaihokori/rpi_cam_web_interface -b main
           git fetch
           git pull origin main
 
