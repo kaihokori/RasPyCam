@@ -59,7 +59,7 @@ jobs:
 
       - name: Move executable to target directory
         run: |
-          mv ../raspycam etc/raspycam
+          mv ../raspycam raspycam
 
       - name: Stage, Commit, and Push Changes
         env:
