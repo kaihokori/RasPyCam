@@ -32,6 +32,9 @@ jobs:
       - name: Unzip downloaded executable
         run: |
           unzip raspycam.zip -d raspycam_unzipped
+          pwd
+          echo
+          ls
           
       - name: Clone forked frontend repository
         env:
@@ -39,6 +42,9 @@ jobs:
         run: |
           git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
+          pwd
+          echo
+          ls
 
       - name: Sync fork with upstream using GitHub CLI
         env:
@@ -59,7 +65,7 @@ jobs:
 
       - name: Move executable to target directory
         run: |
-          cp -r raspycam_unzipped/raspycam/* etc/raspycam/
+          cp -r ../raspycam_unzipped/raspycam/* etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
