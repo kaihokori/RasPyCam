@@ -25,9 +25,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam") | .browser_download_url')
-          curl -L -o raspycam -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-          chmod +x raspycam
+          # Adjust file name to "raspycam.zip"
+          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.zip") | .browser_download_url')
+          curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
+          
+      # New step: Unzip the downloaded file
+      - name: Unzip downloaded executable
+        run: |
+          unzip raspycam.zip -d raspycam_unzipped
           
       - name: Clone forked frontend repository
         env:
@@ -35,7 +40,7 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }} rpi_cam_web_interface
           cd rpi_cam_web_interface
-
+          
       - name: Sync forked frontend repository
         env:
           GH_TOKEN: ${{ secrets.PAT }}
@@ -58,9 +63,10 @@ jobs:
           rm -rf etc/raspycam
           mkdir -p etc/raspycam
 
+      # Adjust this step to move the unzipped folder to the target directory
       - name: Move executable to target directory
         run: |
-          cp -r ../raspycam etc/raspycam/raspycam
+          cp -r raspycam_unzipped/raspycam/* etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -68,7 +74,7 @@ jobs:
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/raspycam
+          git add etc/raspycam/
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
@@ -132,4 +138,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
+          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam.zip pr_body.txt raspycam_unzipped
