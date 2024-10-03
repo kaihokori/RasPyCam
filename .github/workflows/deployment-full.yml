@@ -71,7 +71,15 @@ jobs:
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/raspycam
+          pwd
+          ls
+          echo
+          cd etc
+          ls
+          echo
+          cd raspycam
+          ls
+          git add etc/raspycam
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
