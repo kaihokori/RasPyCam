@@ -55,6 +55,7 @@ jobs:
 
       - name: Ensure directory exists in target
         run: |
+          rm -rf etc/raspycam
           mkdir -p etc/raspycam
 
       - name: Move executable to target directory
