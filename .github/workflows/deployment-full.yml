@@ -33,14 +33,12 @@ jobs:
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
-          pwd
-          ls
           git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }} rpi_cam_web_interface
           cd rpi_cam_web_interface
-          pwd
-          ls
 
       - name: Sync forked frontend repository
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           gh repo sync kaihokori/rpi_cam_web_interface -b main
 
