@@ -58,6 +58,9 @@ jobs:
 
       - name: Move executable to target directory
         run: |
+          pwd
+          ls
+          mkdir -p etc/raspycam/
           cp -r raspycam_unzipped/raspycam/* etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
