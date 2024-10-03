@@ -12,6 +12,7 @@ jobs:
   pull_request:
     name: Full Release
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -25,17 +26,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          # Adjust file name to "raspycam.zip"
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.zip") | .browser_download_url')
-          curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-          
+          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-multiarch.tar.gz") | .browser_download_url')
+          curl -L -o raspycam-multiarch.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
+
       - name: Unzip downloaded executable
         run: |
-          unzip raspycam.zip -d raspycam_unzipped
-          pwd
-          echo
-          ls
-          
+          mkdir raspycam_unzipped
+          tar -xzvf raspycam-multiarch.tar.gz -C raspycam_unzipped
+
       - name: Clone forked frontend repository
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
@@ -62,12 +60,12 @@ jobs:
         run: |
           rm -rf etc/raspycam
 
-      - name: Move executable to target directory
+      - name: Move executables to target directory
         run: |
           pwd
           echo
           ls
-          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
+          cp -r raspycam_unzipped/raspycam-* rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -77,16 +75,13 @@ jobs:
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/raspycam
+          git add etc/raspycam/
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git
-            
-            git branch -M update-raspycam-${{ github.event.release.tag_name }}
-            
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
 
@@ -97,7 +92,7 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
           tail -n +2 release_notes.txt > release_notes_trimmed.txt
-        
+
       - name: Create PR body file
         run: |
           echo "# Release Summary" > pr_body.txt

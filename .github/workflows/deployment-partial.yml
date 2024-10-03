@@ -12,104 +12,43 @@ jobs:
   release:
     name: Partial Release
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [armv6, armv7, arm64]  # List of architectures to build for
+
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
-
-      - name: Delete all draft releases and their tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/kaihokori/raspycam/releases \
-            | jq -r '.[] | select(.draft == true) | .id,.tag_name')
-
-          if [ -n "$releases" ]; then
-            echo "$releases" | while read -r release_id && read -r tag_name; do
-              echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
-              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
-
-              git tag -d "$tag_name" || true
-              git push origin --delete "$tag_name" || true
-            done
-          else
-            echo "No draft releases found."
-          fi
-
-      - name: Delete tags without releases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git fetch --tags
-
-          all_tags=$(git tag)
-
-          release_tags=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/kaihokori/raspycam/releases \
-            | jq -r '.[].tag_name')
-
-          echo "$all_tags" | while read -r tag; do
-            if ! echo "$release_tags" | grep -q "$tag"; then
-              echo "Deleting tag: $tag (no associated release)"
-              git tag -d "$tag" || true
-              git push origin --delete "$tag" || true
-            fi
-          done
-
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-
-      - name: Bump version
-        id: bump_version
-        run: |
-          if [ -z "${{ env.LATEST_TAG }}" ]; then
-            echo "v1" > new_tag
-          else
-            version_number=$(echo "${{ env.LATEST_TAG }}" | grep -o '[0-9]*$')
-            new_version=$((version_number+1))
-            echo "v$new_version" > new_tag
-          fi
-          echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
-
-      - name: Create new tag
-        run: |
-          new_tag=$(cat new_tag)
-          if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
-            echo "Tag $new_tag already exists. Skipping tag creation."
-          else
-            git tag $new_tag
-            git push origin $new_tag
-          fi
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Create Python script
+      - name: Install ARM cross-compilation toolchain
         run: |
-          echo 'print("Hi!")' > raspycam.py
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static gcc-arm-linux-gnueabi libc6-dev-armel-cross
 
-      - name: Set up pyinstaller
+      - name: Create temporary Python script
         run: |
-          pip install pyinstaller
+          echo 'print("Hello from ${{ matrix.arch }}!")' > raspycam.py
 
-      - name: Build executable
+      - name: Cross-compile for ARMv6, ARMv7, and ARM64
         run: |
-          pyinstaller --onedir --noconfirm raspycam.py
+          docker run --rm --privileged -v $(pwd):/src balenalib/raspberry-pi-${{ matrix.arch }}-debian python3 -m pip install pyinstaller
+          docker run --rm --privileged -v $(pwd):/src balenalib/raspberry-pi-${{ matrix.arch }}-debian pyinstaller --onefile /src/raspycam.py
 
-      - name: Package the executable
+      - name: Archive build artifacts
         run: |
-          cd dist
-          zip -r raspycam.zip raspycam
+          mkdir -p release
+          cp -r dist/raspycam ./release/raspycam-${{ matrix.arch }}
+          tar -czvf release/raspycam-${{ matrix.arch }}.tar.gz -C release raspycam-${{ matrix.arch }}
+
+      - name: Package the executables
+        run: |
+          cd release
+          tar -czvf raspycam-multiarch.tar.gz raspycam-armv6.tar.gz raspycam-armv7.tar.gz raspycam-arm64.tar.gz
 
       - name: Generate GitHub draft release
         id: create_release
@@ -121,24 +60,24 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/kaihokori/raspycam/releases \
             -d '{
-              "tag_name": "'${{ env.NEW_TAG }}'",
-              "name": "Release '${{ env.NEW_TAG }}'",
+              "tag_name": "'${{ github.sha }}'",
+              "name": "Release '${{ github.sha }}'",
               "prerelease": false,
               "draft": true,
               "generate_release_notes": true
             }')
           echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
 
-      - name: Upload executable to GitHub release
+      - name: Upload executables to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @dist/raspycam.zip \
+          curl -s --data-binary @release/raspycam-multiarch.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam.zip"
+            "$upload_url?name=raspycam-multiarch.tar.gz"
 
       - name: Clean up
         run: |
-          rm -rf dist new_tag upload_url.txt raspycam.py build __pycache__ raspycam.spec
+          rm -rf dist release new_tag upload_url.txt raspycam.py build __pycache__ raspycam.spec
