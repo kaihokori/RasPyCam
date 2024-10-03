@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv6, armv7, arm64]  # List of architectures to build for
+        arch: [arm32v6, arm32v7, arm64v8]
 
     steps:
       - name: Checkout backend repository
@@ -25,10 +25,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install ARM cross-compilation toolchain
+      - name: Install QEMU for cross-compilation
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-user-static gcc-arm-linux-gnueabi libc6-dev-armel-cross
+          sudo apt-get install -y qemu-user-static
 
       - name: Create temporary Python script
         run: |
@@ -36,8 +36,8 @@ jobs:
 
       - name: Cross-compile for ARMv6, ARMv7, and ARM64
         run: |
-          docker run --rm --privileged -v $(pwd):/src balenalib/raspberry-pi-${{ matrix.arch }}-debian python3 -m pip install pyinstaller
-          docker run --rm --privileged -v $(pwd):/src balenalib/raspberry-pi-${{ matrix.arch }}-debian pyinstaller --onefile /src/raspycam.py
+          docker run --rm --privileged -v $(pwd):/src --platform linux/${{ matrix.arch }} arm32v6/python:latest bash -c "\
+            python3 -m pip install pyinstaller && pyinstaller --onefile /src/raspycam.py"
 
       - name: Archive build artifacts
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Package the executables
         run: |
           cd release
-          tar -czvf raspycam-multiarch.tar.gz raspycam-armv6.tar.gz raspycam-armv7.tar.gz raspycam-arm64.tar.gz
+          tar -czvf raspycam-multiarch.tar.gz raspycam-arm32v6.tar.gz raspycam-arm32v7.tar.gz raspycam-arm64v8.tar.gz
 
       - name: Generate GitHub draft release
         id: create_release
