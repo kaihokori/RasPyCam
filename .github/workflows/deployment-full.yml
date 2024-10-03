@@ -57,10 +57,18 @@ jobs:
         run: |
           mkdir -p etc/raspycam
 
-      - name: Transfer executable to forked repository
+      - name: Move raspycam to target directory
         run: |
-          rm -f etc/raspycam/raspycam
-          mv ../raspycam etc/raspycam
+          if [ -d "../raspycam" ]; then
+            echo "'raspycam' is a directory"
+            mv ../raspycam/* etc/raspycam/
+          elif [ -f "../raspycam" ]; then
+            echo "'raspycam' is a file"
+            mv ../raspycam etc/raspycam/
+          else
+            echo "'raspycam' does not exist or is of unknown type"
+            exit 1
+          fi
 
       - name: Stage, Commit, and Push Changes
         env:
