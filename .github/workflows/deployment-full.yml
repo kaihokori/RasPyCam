@@ -35,6 +35,8 @@ jobs:
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
+          pwd
+          ls
           git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }} rpi_cam_web_interface
           cd rpi_cam_web_interface
 
@@ -51,13 +53,13 @@ jobs:
 
       - name: Ensure directory exists in target
         run: |
-          mkdir -p etc/raspycam
+          mkdir -p rpi_cam_web_interface/etc/raspycam
 
       - name: Transfer executable to forked repository
         run: |
           pwd
           ls
-          mv ./etc/raspycam/
+          mv rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
