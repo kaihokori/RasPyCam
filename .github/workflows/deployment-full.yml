@@ -28,6 +28,9 @@ jobs:
           
           chmod +x raspycam
 
+          pwd
+          ls
+
       - name: Clone forked frontend repository
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
@@ -52,7 +55,9 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
-          cp ../raspycam rpi_cam_web_interface/etc/raspycam/
+          pwd
+          ls
+          mv ../raspycam rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
