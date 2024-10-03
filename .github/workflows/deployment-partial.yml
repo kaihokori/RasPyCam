@@ -83,11 +83,6 @@ jobs:
             git tag $new_tag
             git push origin $new_tag
           fi
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
 
       - name: Set up dependencies and build executable
         run: |
