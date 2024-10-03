@@ -29,7 +29,6 @@ jobs:
           asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.zip") | .browser_download_url')
           curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
           
-      # New step: Unzip the downloaded file
       - name: Unzip downloaded executable
         run: |
           unzip raspycam.zip -d raspycam_unzipped
@@ -63,7 +62,6 @@ jobs:
           rm -rf etc/raspycam
           mkdir -p etc/raspycam
 
-      # Adjust this step to move the unzipped folder to the target directory
       - name: Move executable to target directory
         run: |
           cp -r raspycam_unzipped/raspycam/* etc/raspycam/
@@ -113,7 +111,7 @@ jobs:
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt
 
-      - name: Create Pull Request
+      - name: Create Draft Pull Request
         env:
           PAT: ${{ secrets.PAT }}
         run: |
@@ -124,17 +122,7 @@ jobs:
             --base main \
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
-            --label "auto-merge"
-
-      - name: Merge Pull Request Automatically
-        env:
-          PAT: ${{ secrets.PAT }}
-        run: |
-          gh pr merge \
-            --auto \
-            --repo traitsaponin/rpi_cam_web_interface \
-            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
-            --delete-branch
+            --draft
 
       - name: Clean up
         run: |
