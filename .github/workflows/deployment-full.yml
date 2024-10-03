@@ -44,9 +44,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          gh repo sync kaihokori/rpi_cam_web_interface -b main
+          gh repo sync kaihokori/rpi_cam_web_interface --branch main --source-branch main
           git fetch
-          git pull
+          git pull origin main
 
       - name: Create new branch for update
         run: |
