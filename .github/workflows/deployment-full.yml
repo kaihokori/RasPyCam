@@ -57,18 +57,9 @@ jobs:
         run: |
           mkdir -p etc/raspycam
 
-      - name: Move raspycam to target directory
+      - name: Move executable to target directory
         run: |
-          if [ -d "../raspycam" ]; then
-            echo "'raspycam' is a directory"
-            mv ../raspycam/* etc/raspycam/
-          elif [ -f "../raspycam" ]; then
-            echo "'raspycam' is a file"
-            mv ../raspycam etc/raspycam/
-          else
-            echo "'raspycam' does not exist or is of unknown type"
-            exit 1
-          fi
+          mv ../raspycam etc/raspycam
 
       - name: Stage, Commit, and Push Changes
         env:
