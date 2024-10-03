@@ -59,6 +59,7 @@ jobs:
 
       - name: Transfer executable to forked repository
         run: |
+          rm -f etc/raspycam/raspycam
           mv ../raspycam etc/raspycam
 
       - name: Stage, Commit, and Push Changes
