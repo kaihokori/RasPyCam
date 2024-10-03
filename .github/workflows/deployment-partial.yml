@@ -104,7 +104,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --one-directory --noconfirm raspycam.py
+          pyinstaller --onedir --noconfirm raspycam.py
 
       - name: Generate GitHub draft release
         id: create_release
