@@ -12,6 +12,7 @@ jobs:
   pull_request:
     name: Full Release
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -20,31 +21,28 @@ jobs:
         run: |
           sudo apt-get install -y gh
 
-      - name: Download executable from release
+      - name: Download binaries from the latest release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          # Adjust file name to "raspycam.zip"
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.zip") | .browser_download_url')
-          curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-          
-      - name: Unzip downloaded executable
-        run: |
-          unzip raspycam.zip -d raspycam_unzipped
-          pwd
-          echo
-          ls
-          
+
+          # Fetch the URLs of the binaries for each architecture
+          asset_url_armv6=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspymjpeg-armv6.tar.gz") | .browser_download_url')
+          asset_url_armv7=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspymjpeg-armv7.tar.gz") | .browser_download_url')
+          asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspymjpeg-arm64.tar.gz") | .browser_download_url')
+
+          # Download each binary
+          curl -L -o raspymjpeg-armv6.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_armv6"
+          curl -L -o raspymjpeg-armv7.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_armv7"
+          curl -L -o raspymjpeg-arm64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
+
       - name: Clone forked frontend repository
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
-          pwd
-          echo
-          ls
 
       - name: Sync fork with upstream using GitHub CLI
         env:
@@ -56,18 +54,18 @@ jobs:
 
       - name: Create new branch for update
         run: |
-          git checkout -b update-raspycam-${{ github.event.release.tag_name }}
+          git checkout -b update-raspymjpeg-${{ github.event.release.tag_name }}
 
-      - name: Resetting target directory
+      - name: Reset target directory
         run: |
-          rm -rf etc/raspycam
+          rm -rf etc/raspymjpeg
 
-      - name: Move executable to target directory
+      - name: Move binaries to the target directory
         run: |
-          pwd
-          echo
-          ls
-          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
+          mkdir -p etc/raspymjpeg
+          mv ../raspymjpeg-armv6.tar.gz etc/raspymjpeg/raspymjpeg-armv6.tar.gz
+          mv ../raspymjpeg-armv7.tar.gz etc/raspymjpeg/raspymjpeg-armv7.tar.gz
+          mv ../raspymjpeg-arm64.tar.gz etc/raspymjpeg/raspymjpeg-arm64.tar.gz
 
       - name: Stage, Commit, and Push Changes
         env:
@@ -77,17 +75,15 @@ jobs:
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git add etc/raspycam/raspycam
+          git add etc/raspymjpeg
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
             exit 0
           else
-            git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
+            git commit -m "Updating raspymjpeg to ${{ github.event.release.tag_name }}"
             git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git
-            
-            git branch -M update-raspycam-${{ github.event.release.tag_name }}
-            
-            git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
+            git branch -M update-raspymjpeg-${{ github.event.release.tag_name }}
+            git push --set-upstream origin update-raspymjpeg-${{ github.event.release.tag_name }}
           fi
 
       - name: Fetch Release Notes
@@ -109,17 +105,8 @@ jobs:
           echo "1. **Change X:**" >> pr_body.txt
           echo "   - [Text]" >> pr_body.txt
           echo "" >> pr_body.txt
-          echo "## Additional Notes" >> pr_body.txt
-          echo "" >> pr_body.txt
-          echo "- **Manual Usage**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README." >> pr_body.txt
-          echo "" >> pr_body.txt
           echo "## Changelog" >> pr_body.txt
-          echo "" >> pr_body.txt
-          echo "For a detailed list of changes and improvements, refer to the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\`:" >> pr_body.txt
-          echo "" >> pr_body.txt
-          echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
-          echo "" >> pr_body.txt
 
       - name: Create Draft Pull Request
         env:
@@ -130,10 +117,10 @@ jobs:
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
             --base main \
-            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
+            --head "kaihokori:update-raspymjpeg-${{ github.event.release.tag_name }}" \
             --repo traitsaponin/rpi_cam_web_interface \
             --draft
 
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
+          rm -rf rpi_cam_web_interface release_notes.txt pr_body.txt etc/raspymjpeg
