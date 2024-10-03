@@ -89,10 +89,22 @@ jobs:
             git push origin $new_tag
           fi
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Create Python script
+        run: |
+          echo 'print("Hi")' > raspycam.py
+
+      - name: Set up pyinstaller
+        run: |
+          pip install pyinstaller
+
       - name: Build executable
         run: |
-          mkdir -p dist
-          echo 'This step will be replaced with the actual executable' > dist/raspycam
+          pyinstaller --one-directory --noconfirm raspycam.py
 
       - name: Generate GitHub draft release
         id: create_release
@@ -124,4 +136,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf dist new_tag upload_url.txt
+          rm -rf dist new_tag upload_url.txt hi.py build __pycache__ hi.spec
