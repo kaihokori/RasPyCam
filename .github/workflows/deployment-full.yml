@@ -13,6 +13,10 @@ jobs:
     name: Full Release
     runs-on: ubuntu-latest
     steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+    
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
@@ -73,10 +77,6 @@ jobs:
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
           fi
-
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get install -y gh
 
       - name: Fetch Release Notes
         env:
