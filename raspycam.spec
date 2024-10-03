@@ -3,7 +3,7 @@
 a = Analysis(
     ['app/main.py'],
     pathex=['app/core', 'app/utilities'],
-    binaries=[('/usr/lib/aarch64-linux-gnu/libpython3.11.so', '.')],  # Add the shared library
+    binaries=[('/usr/lib/aarch64-linux-gnu/libpython3.11.so', '.')],
     datas=[('app/core/*', 'core'), ('app/utilities/*', 'utilities')],
     hiddenimports=['picamera2', 'numpy', 'PIL', 'cv2', 'libcamera', 'simplejpeg', 'v4l2'],
     hookspath=[],
