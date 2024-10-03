@@ -26,11 +26,12 @@ jobs:
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
           asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.tar.gz") | .browser_download_url')
-          curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
+          curl -L -o raspycam.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
           
       - name: Uncompress downloaded executable
         run: |
-          unzip raspycam.zip -d raspycam_unzipped
+          mkdir raspycam_unzipped
+          tar -xzf raspycam.tar.gz -C raspycam_unzipped
           
       - name: Clone forked frontend repository
         env:
@@ -125,4 +126,4 @@ jobs:
             
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam pr_body.txt
+          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam_unzipped pr_body.txt
