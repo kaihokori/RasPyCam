@@ -126,4 +126,4 @@ jobs:
             
       - name: Clean up
         run: |
-          rm -rf ./rpi_cam_web_interface release_notes.txt raspycam_unzipped pr_body.txt
+          rm -rf raspycam_unzipped raspycam.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
