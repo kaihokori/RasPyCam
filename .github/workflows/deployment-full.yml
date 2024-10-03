@@ -53,10 +53,9 @@ jobs:
         run: |
           git checkout -b update-raspycam-${{ github.event.release.tag_name }}
 
-      - name: Ensure directory exists in target
+      - name: Removing old executable
         run: |
           rm -rf etc/raspycam
-          mkdir -p etc/raspycam
 
       - name: Move executable to target directory
         run: |
