@@ -29,7 +29,6 @@ jobs:
           asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.zip") | .browser_download_url')
           curl -L -o raspycam.zip -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
           
-      # New step: Unzip the downloaded file
       - name: Unzip downloaded executable
         run: |
           unzip raspycam.zip -d raspycam_unzipped
@@ -63,7 +62,6 @@ jobs:
           rm -rf etc/raspycam
           mkdir -p etc/raspycam
 
-      # Adjust this step to move the unzipped folder to the target directory
       - name: Move executable to target directory
         run: |
           cp -r raspycam_unzipped/raspycam/* etc/raspycam/
