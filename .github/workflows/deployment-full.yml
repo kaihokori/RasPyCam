@@ -57,7 +57,7 @@ jobs:
         run: |
           pwd
           ls
-          mv ../raspycam rpi_cam_web_interface/etc/raspycam/
+          mv ./etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         env:
