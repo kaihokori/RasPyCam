@@ -39,7 +39,7 @@ jobs:
           FORKED_REPO: ${{ vars.FORKED_REPO }}
           SOURCE_REPO: ${{ vars.SOURCE_REPO }}
         run: |
-          git clone https://x-access-token:${{ $PAT }}@github.com/${{ $FORKED_REPO }}.git rpi_cam_web_interface
+          git clone https://x-access-token:$PAT@github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
           git fetch --all
@@ -99,7 +99,7 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ $PAT }}@github.com/${{ $FORKED_REPO }}.git
+            git remote set-url origin https://x-access-token:$PAT@github.com/$FORKED_REPO.git
             git branch -M update-raspycam-${{ github.event.release.tag_name }}
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
             echo "changes_made=true" >> $GITHUB_ENV
@@ -144,7 +144,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
           SOURCE_REPO: ${{ vars.SOURCE_REPO }}
         run: |
-          gh auth login --with-token <<< "${{ $PAT }}"
+          gh auth login --with-token <<< "$PAT"
           gh pr create \
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
