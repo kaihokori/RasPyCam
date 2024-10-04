@@ -58,8 +58,6 @@ jobs:
 
       - name: Move executable to target directory
         run: |
-          pwd
-          ls
           mkdir -p rpi_cam_web_interface/etc/raspycam/
           cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
 
@@ -68,20 +66,9 @@ jobs:
           PAT: ${{ secrets.PAT }}
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
-          pwd
-          ls
-          echo
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          pwd
-          ls
-          echo
-          cd etc
-          ls
-          echo
-          cd raspycam
-          ls
           git add etc/raspycam
           if git diff-index --quiet HEAD; then
             echo "No changes to commit, exiting."
