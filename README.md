@@ -32,7 +32,7 @@ There are two ways of using RasPyCam:
 
 <h1>Requirements</h1>
 
-Running the RasPyCam application requires installation of the picamera2, opencv-python, and Pillow libraries. You can install these dependencies using the following commands: 
+Running the RasPyCam application requires installation of the [PiCamera 2](https://pypi.org/project/picamera2/0.2.2/), [OpenCV](https://pypi.org/project/opencv-python/), and [Pillow](https://pypi.org/project/pillow/) libraries. You can install these dependencies using the following commands: 
 
 ```bash
 pip install picamera2 opencv-python Pillow
@@ -45,7 +45,7 @@ If you intend to use RasPyCam as a standalone program, you can follow the follow
 1. Clone the repository to your Raspberry Pi:
 ```bash
 git clone https://github.com/kaihokori/raspycam.git
-cd raspycam
+cd raspycam/app
 ```
 
 2. Run the program:
@@ -82,7 +82,7 @@ If the program is initated without a specified configuration file, the program w
 | Stills | /tmp/media/im_%i_%Y%M%D_%h%m%s.jpg |
 | Status File | /tmp/status_cam.txt |
 
-> Command names and parameters have been named in accordance with the [RPi Cam Web Interface](https://github.com/silvanmelchior/RPi_Cam_Web_Interface) system to ensure compatibility.
+> Command names, parameters and paths have been sourced from the [RPi Cam Web Interface](https://github.com/silvanmelchior/RPi_Cam_Web_Interface) system to ensure compatibility.
 
 To stop the program, you can either send SIGINT or SIGTERM signals to the program. This can be done by either pressing `Ctrl+C` in the terminal running the program or by using the `kill` command.
 
@@ -109,7 +109,12 @@ To make changes to the code, you can follow the steps below:
 
 <h2>Testing Changes</h2>
 
-To test your changes and generage a coverage report, you can run the following command on a Raspberry Pi with a camera module connected to it: 
+To test your changes and generage a coverage report, you can run the following commands on a Raspberry Pi with a camera module connected to it: 
+
+```bash
+sudo apt update
+sudo apt install libcap-dev python3-pytest libopencv-dev python3-pytest-cov -y
+```
 
 ```bash
 PYTHONPATH=./app pytest --import-mode=importlib --cov=app --cov-report=term --cov-report=html:coverage_html --cov-config=tests/.coveragerc
