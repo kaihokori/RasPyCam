@@ -35,10 +35,11 @@ jobs:
           
       - name: Sync fork with upstream and delete old branches
         env:
-          FORKED_REPO: ${{ secrets.FORKED_REPO }}
-          SOURCE_REPO: ${{ secrets.SOURCE_REPO }}
+          PAT: ${{ secrets.PAT }}
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
         run: |
-          git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git rpi_cam_web_interface
+          git clone https://x-access-token:${{ $PAT }}@github.com/${{ $FORKED_REPO }}.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
           git fetch --all
@@ -56,7 +57,7 @@ jobs:
 
       - name: Sync fork with upstream using GitHub CLI
         env:
-          FORKED_REPO: ${{ secrets.FORKED_REPO }}
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
           cd rpi_cam_web_interface
@@ -86,7 +87,7 @@ jobs:
         id: commit_changes
         env:
           PAT: ${{ secrets.PAT }}
-          FORKED_REPO: ${{ secrets.FORKED_REPO }}
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
         run: |
           cd rpi_cam_web_interface
           git config user.name "$(git log -n 1 --pretty=format:%an)"
@@ -98,7 +99,7 @@ jobs:
             exit 0
           else
             git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git
+            git remote set-url origin https://x-access-token:${{ $PAT }}@github.com/${{ $FORKED_REPO }}.git
             git branch -M update-raspycam-${{ github.event.release.tag_name }}
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
             echo "changes_made=true" >> $GITHUB_ENV
@@ -141,9 +142,9 @@ jobs:
         if: env.changes_made == 'true'
         env:
           PAT: ${{ secrets.PAT }}
-          SOURCE_REPO: ${{ secrets.SOURCE_REPO }}
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
         run: |
-          gh auth login --with-token <<< "${{ secrets.PAT }}"
+          gh auth login --with-token <<< "${{ $PAT }}"
           gh pr create \
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
