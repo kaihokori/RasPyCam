@@ -41,16 +41,14 @@ jobs:
         run: |
           git clone https://x-access-token:$PAT@github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
-          git fetch --all
           
+          git fetch https://github.com/$SOURCE_REPO.git master
           git checkout master
-          git pull origin master --rebase
+          git merge FETCH_HEAD
           
           git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
           
-          gh repo sync $FORKED_REPO --source $SOURCE_REPO --branch master
-          
-          git push
+          git push origin master --force
 
       - name: Clear Git cache
         run: |
