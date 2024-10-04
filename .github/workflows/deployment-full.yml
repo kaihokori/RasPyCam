@@ -36,15 +36,16 @@ jobs:
       - name: Sync fork with upstream and delete old branches
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
+          SOURCE_REPO: ${{ secrets.SOURCE_REPO }}
         run: |
-          git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
+          git clone https://x-access-token:${{ secrets.PAT }}@github.com/${{ secrets.FORKED_REPO }}.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
           git fetch --all
 
           git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
 
-          gh repo sync $FORKED_REPO --source traitsaponin/RPi_Cam_Web_Interface --branch master
+          gh repo sync $FORKED_REPO --source $SOURCE_REPO --branch master
 
           git push
 
@@ -140,6 +141,7 @@ jobs:
         if: env.changes_made == 'true'
         env:
           PAT: ${{ secrets.PAT }}
+          SOURCE_REPO: ${{ secrets.SOURCE_REPO }}
         run: |
           gh auth login --with-token <<< "${{ secrets.PAT }}"
           gh pr create \
@@ -147,7 +149,7 @@ jobs:
             --body-file pr_body.txt \
             --base main \
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
-            --repo traitsaponin/rpi_cam_web_interface \
+            --repo $SOURCE_REPO \
             --draft
 
       - name: Clean up
