@@ -33,12 +33,20 @@ jobs:
           mkdir raspycam_unzipped
           tar -xzf raspycam.tar.gz -C raspycam_unzipped
           
-      - name: Clone forked frontend repository
+      - name: Sync fork with upstream and delete old branches
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
         run: |
           git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
+
+          git fetch --all
+
+          git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
+
+          gh repo sync $FORKED_REPO --source traitsaponin/RPi_Cam_Web_Interface --branch master
+
+          git push
 
       - name: Clear Git cache
         run: |
