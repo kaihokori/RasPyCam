@@ -16,6 +16,11 @@ jobs:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
       - name: Delete all draft releases and their tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
