@@ -1,17 +1,13 @@
 import argparse
 from core.process import start_background_process
 
-# ANSI escape codes
-GREEN = "\033[92m"
-RESET = "\033[0m"
-
 def main(args):
     """Main function to start the background process using provided config file."""
     config_filepath = args.config_filepath
     try:
         start_background_process(config_filepath)
     except KeyboardInterrupt:
-        print(f"{GREEN}Server stopped.{RESET}")
+        print("Server stopped.")
 
 if __name__ == "__main__":
     # Argument parser for reading config file from command line input
