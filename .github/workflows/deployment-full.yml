@@ -148,7 +148,7 @@ jobs:
           gh pr create \
             --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
             --body-file pr_body.txt \
-            --base main \
+            --base master \
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo $SOURCE_REPO \
             --draft
