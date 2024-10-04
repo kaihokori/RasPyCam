@@ -62,7 +62,11 @@ jobs:
 
       - name: Resetting target directory
         run: |
-          git checkout HEAD -- etc/raspycam
+          if [ -d "etc/raspycam" ]; then
+            git checkout HEAD -- etc/raspycam
+          else
+            echo "Directory etc/raspycam does not exist, skipping reset."
+          fi
 
       - name: Move executable to target directory
         run: |
