@@ -40,13 +40,21 @@ jobs:
           git clone https://github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
 
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
       - name: Sync fork with upstream using GitHub CLI
         env:
           FORKED_REPO: ${{ secrets.FORKED_REPO }}
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
           cd rpi_cam_web_interface
-          gh repo sync $FORKED_REPO --source traitsaponin/rpi_cam_web_interface --branch main
+          git clone --filter=blob:none --no-checkout https://github.com/$FORKED_REPO.git
+          cd rpi_cam_web_interface
+          git sparse-checkout init --cone
+          git sparse-checkout set etc/raspycam
 
       - name: Create new branch for update
         run: |
@@ -54,7 +62,7 @@ jobs:
 
       - name: Resetting target directory
         run: |
-          rm -rf etc/raspycam
+          git checkout HEAD -- etc/raspycam
 
       - name: Move executable to target directory
         run: |
