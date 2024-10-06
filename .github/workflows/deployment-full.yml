@@ -20,18 +20,21 @@ jobs:
         run: |
           sudo apt-get install -y gh
 
-      - name: Download executable from release
+      - name: Download executables from release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.tar.gz") | .browser_download_url')
-          curl -L -o raspycam.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-          
-      - name: Uncompress downloaded executable
+          asset_url_64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-64.tar.gz") | .browser_download_url')
+          asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM64.tar.gz") | .browser_download_url')
+          curl -L -o RasPyCam-ARM.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_64"
+          curl -L -o RasPyCam-ARM64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
+
+      - name: Uncompress downloaded executables
         run: |
           mkdir raspycam_unzipped
-          tar -xzf raspycam.tar.gz -C raspycam_unzipped
+          tar -xzf RasPyCam-ARM.tar.gz -C raspycam_unzipped
+          tar -xzf RasPyCam-ARM64.tar.gz -C raspycam_unzipped
           
       - name: Sync fork with upstream and delete old branches
         env:
@@ -155,4 +158,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf raspycam_unzipped raspycam.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
+          rm -rf raspycam_unzipped RasPyCam-ARM.tar.gz RasPyCam-ARM64.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt

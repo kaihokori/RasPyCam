@@ -9,9 +9,9 @@ on:
       - main
 
 jobs:
-  release:
-    name: Partial Release
-    runs-on: pi-five
+  release-arm64:
+    name: Partial Release ARM64
+    runs-on: ARM64
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -96,12 +96,12 @@ jobs:
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
           pyinstaller raspycam.spec --noconfirm
+          mv dist/raspycam dist/RasPyCam-ARM64
 
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          cp -r dist/raspycam ./release/raspycam
-          tar -czvf release/raspycam.tar.gz -C release raspycam
+          tar -czvf release/RasPyCam-ARM64.tar.gz -C dist RasPyCam-ARM64
 
       - name: Generate GitHub draft release
         id: create_release
@@ -126,11 +126,47 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @release/raspycam.tar.gz \
+          curl -s --data-binary @release/RasPyCam-ARM64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam.tar.gz"        
+            "$upload_url?name=RasPyCam-ARM64.tar.gz"
 
-      - name: Clean up
+      - name: Cleanup build artifacts
         run: |
-          rm -rf venv dist build release
+          rm -rf venv dist release upload_url.txt new_tag
+
+  release-arm:
+    name: Partial Release ARM
+    runs-on: ARM64  # This should be changed to 'ARM' when the ARM-based Pi is set up as a self-hosted runner
+    needs: release-arm64
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Set up dependencies and build executable
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
+          pyinstaller raspycam.spec --noconfirm
+          mv dist/raspycam dist/RasPyCam-ARM
+
+      - name: Archive build artifacts
+        run: |
+          mkdir -p release
+          tar -czvf release/RasPyCam-ARM.tar.gz -C dist RasPyCam-ARM
+
+      - name: Upload executable to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upload_url=$(cat upload_url.txt)
+          curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            "$upload_url?name=RasPyCam-ARM.tar.gz"
+
+      - name: Cleanup build artifacts
+        run: |
+          rm -rf venv dist release upload_url.txt new_tag
