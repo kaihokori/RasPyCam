@@ -121,42 +121,42 @@ jobs:
             }')
           echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
 
-      - name: Cache the upload URL
-        uses: actions/cache@v4
-        with:
-          path: upload_url.txt
-          key: upload-url-${{ github.run_id }}
-
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=${{ steps.create_release.outputs.upload_url }}
+          upload_url=$(cat upload_url.txt)
           curl -s --data-binary @release/RasPyCam-ARM64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
             "$upload_url?name=RasPyCam-ARM64.tar.gz"
 
+      - name: Save upload URL and new tag as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-info
+          path: |
+            upload_url.txt
+          retention-days: 1
+
       - name: Cleanup build artifacts
         run: |
-          rm -rf venv dist release new_tag
+          rm -rf venv dist release upload_url.txt new_tag
 
-  release-arm:
-    name: Partial Release ARM
-    runs-on: ARM64  # Change to 'ARM' when self-hosted runner is available
+  release-x64:
+    name: Partial Release X64
+    runs-on: ARM64  # This should be changed to 'X64' when the X64-based Pi is set up as a self-hosted runner
     needs: release-arm64
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
 
-      - name: Restore cached upload URL
-        uses: actions/cache@v4
+      - name: Download release information
+        uses: actions/download-artifact@v3
         with:
-          path: upload_url.txt
-          key: upload-url-${{ github.run_id }}
-          restore-keys: |
-            upload-url-${{ github.run_id }}
-
+          name: release-info
+          path: ./release-info
+          
       - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
@@ -164,23 +164,23 @@ jobs:
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
           pyinstaller raspycam.spec --noconfirm
-          mv dist/raspycam dist/RasPyCam-ARM
+          mv dist/raspycam dist/RasPyCam-X64
 
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          tar -czvf release/RasPyCam-ARM.tar.gz -C dist RasPyCam-ARM
+          tar -czvf release/RasPyCam-X64.tar.gz -C dist RasPyCam-X64
 
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
+          upload_url=$(cat release-info/upload_url.txt)
+          curl -s --data-binary @release/RasPyCam-X64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=RasPyCam-ARM.tar.gz"
+            "$upload_url?name=RasPyCam-X64.tar.gz"
 
       - name: Cleanup build artifacts
         run: |
-          rm -rf venv dist release new_tag
+          rm -rf venv dist release release-info
