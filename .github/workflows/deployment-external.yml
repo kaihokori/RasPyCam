@@ -133,8 +133,8 @@ jobs:
       - name: Move executables to target directory
         run: |
           mkdir -p rpi_cam_web_interface/etc/raspycam
-          cp raspycam_unzipped/RasPyCam-ARM rpi_cam_web_interface/etc/raspycam/
-          cp raspycam_unzipped/RasPyCam-ARM64 rpi_cam_web_interface/etc/raspycam/
+          cp -r raspycam_unzipped/RasPyCam-ARM rpi_cam_web_interface/etc/raspycam/
+          cp -r raspycam_unzipped/RasPyCam-ARM64 rpi_cam_web_interface/etc/raspycam/
 
       - name: Stage, Commit, and Push Changes
         id: commit_changes
