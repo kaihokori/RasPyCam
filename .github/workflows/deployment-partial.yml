@@ -9,6 +9,32 @@ on:
       - main
 
 jobs:
+  mirror:
+    name: Mirror
+    runs-on: ARM64
+    if: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Bitbucket
+        env:
+          BITBUCKET_USERNAME: ${{ secrets.BITBUCKET_USERNAME }}
+          BITBUCKET_PASSWORD: ${{ secrets.BITBUCKET_PASSWORD }}
+          BITBUCKET_REPO: ${{ vars.BITBUCKET_REPO }}
+        run: |
+          git remote add bitbucket https://${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}@bitbucket.org/$BITBUCKET_REPO.git
+          git push bitbucket --all --force
+          git push bitbucket --tags --force
+      - name: Clean up machine
+        if: always()
+        run: |
+          git remote remove bitbucket
+          git reset --hard
+          git clean -fdx
+
   release-arm64:
     name: Partial Release ARM64
     runs-on: ARM64
