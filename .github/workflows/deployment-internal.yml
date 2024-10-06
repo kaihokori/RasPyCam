@@ -186,7 +186,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            upload_url=$(cat upload_url.txt)
+            upload_url=$(cat upload_url)
             curl -s --data-binary @release-arm64/raspycam-arm64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
@@ -196,7 +196,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            upload_url=$(cat upload_url.txt)
+            upload_url=$(cat upload_url)
             curl -s --data-binary @release-arm/raspycam-arm.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
