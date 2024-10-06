@@ -35,13 +35,13 @@ jobs:
           git reset --hard
           git clean -fdx
 
-  release-arm64:
-    name: Partial Release ARM64
+  release-cleanup:
+    name: Release Cleanup
     runs-on: ARM64
     steps:
-      - name: Checkout backend repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-
+    
       - name: Clear Git cache
         run: |
           git rm -r --cached .
@@ -86,6 +86,14 @@ jobs:
             fi
           done
 
+  release:
+    name: Release
+    runs-on: ARM64
+    needs: release-cleanup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Get latest tag
         id: get_tag
         run: |
@@ -105,7 +113,9 @@ jobs:
           fi
           echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
 
-      - name: Create new tag
+      - name: Create new tag and release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           new_tag=$(cat new_tag)
           if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
@@ -114,6 +124,41 @@ jobs:
             git tag $new_tag
             git push origin $new_tag
           fi
+          response=$(curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v4+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            -d '{
+              "tag_name": "'${{ env.NEW_TAG }}'",
+              "name": "Release '${{ env.NEW_TAG }}'",
+              "prerelease": false,
+              "draft": true,
+              "generate_release_notes": true
+            }')
+          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
+
+      - name: Save upload URL and new tag as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-info
+          path: |
+            upload_url.txt
+            new_tag
+          retention-days: 1
+
+  executable-arm64:
+    name: Executable (ARM64)
+    runs-on: ARM64
+    needs: release
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Download release information
+        uses: actions/download-artifact@v4
+        with:
+          name: release-info
+          path: ./release-info
 
       - name: Set up dependencies and build executable
         run: |
@@ -129,50 +174,24 @@ jobs:
           mkdir -p release
           tar -czvf release/RasPyCam-ARM64.tar.gz -C dist RasPyCam-ARM64
 
-      - name: Generate GitHub draft release
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          response=$(curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v4+json" \
-            https://api.github.com/repos/kaihokori/raspycam/releases \
-            -d '{
-              "tag_name": "'${{ env.NEW_TAG }}'",
-              "name": "Release '${{ env.NEW_TAG }}'",
-              "prerelease": false,
-              "draft": true,
-              "generate_release_notes": true
-            }')
-          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
-
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(cat upload_url.txt)
+          upload_url=$(cat release-info/upload_url.txt)
           curl -s --data-binary @release/RasPyCam-ARM64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
             "$upload_url?name=RasPyCam-ARM64.tar.gz"
 
-      - name: Save upload URL and new tag as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-info
-          path: |
-            upload_url.txt
-          retention-days: 1
-
       - name: Cleanup build artifacts
         run: |
-          rm -rf venv dist release upload_url.txt new_tag
+          rm -rf venv dist release release-info
 
-  release-arm:
-    name: Partial Release ARM
-    runs-on: ARM64  # This should be changed to 'ARM' when the ARM-based Pi is set up as a self-hosted runner
-    needs: release-arm64
+  executable-arm:
+    name: Executable (ARM)
+    runs-on: ARM64  # Update when self-hosted ARM runner is available
+    needs: release
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -182,7 +201,7 @@ jobs:
         with:
           name: release-info
           path: ./release-info
-          
+
       - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
