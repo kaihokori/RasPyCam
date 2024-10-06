@@ -19,7 +19,7 @@ jobs:
       - name: Install GitHub CLI
         run: |
           sudo apt-get install -y gh
-
+          
       - name: Download executables from release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,12 +29,13 @@ jobs:
           asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM64.tar.gz") | .browser_download_url')
           curl -L -o RasPyCam-ARM.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm"
           curl -L -o RasPyCam-ARM64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
-
+          
       - name: Uncompress downloaded executables
         run: |
           mkdir raspycam_unzipped
-          tar -xzf RasPyCam-ARM.tar.gz -C raspycam_unzipped
-          tar -xzf RasPyCam-ARM64.tar.gz -C raspycam_unzipped
+          mkdir raspycam_unzipped/arm raspycam_unzipped/arm64
+          tar -xzf RasPyCam-ARM.tar.gz -C raspycam_unzipped/arm
+          tar -xzf RasPyCam-ARM64.tar.gz -C raspycam_unzipped/arm64
           
       - name: Sync fork with upstream and delete old branches
         env:
@@ -52,12 +53,12 @@ jobs:
           git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
           
           git push origin master --force
-
+          
       - name: Clear Git cache
         run: |
           git rm -r --cached .
           git reset --hard
-
+          
       - name: Sync fork with upstream using GitHub CLI
         env:
           FORKED_REPO: ${{ vars.FORKED_REPO }}
@@ -68,34 +69,26 @@ jobs:
           cd rpi_cam_web_interface
           git sparse-checkout init --cone
           git sparse-checkout set etc/raspycam
-
+          
       - name: Create new branch for update
         run: |
           git checkout -b update-raspycam-${{ github.event.release.tag_name }}
-
+          
       - name: Resetting target directory
         run: |
-          pwd
-          echo
-          ls
-          echo
           if [ -d "etc/raspycam" ]; then
             git checkout HEAD -- etc/raspycam
           else
             echo "Directory etc/raspycam does not exist, skipping reset."
           fi
-
-      - name: Move executable to target directory
+          
+      - name: Move executables to target directory
         run: |
-          pwd
-          echo
-          ls
-          echo
-          mkdir -p rpi_cam_web_interface/etc/raspycam/
-          ls
-          echo
-          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
-
+          mkdir -p rpi_cam_web_interface/etc/raspycam/arm
+          mkdir -p rpi_cam_web_interface/etc/raspycam/arm64
+          cp -r raspycam_unzipped/arm/* rpi_cam_web_interface/etc/raspycam/arm/
+          cp -r raspycam_unzipped/arm64/* rpi_cam_web_interface/etc/raspycam/arm64/
+          
       - name: Stage, Commit, and Push Changes
         id: commit_changes
         env:
@@ -117,7 +110,7 @@ jobs:
             git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
             echo "changes_made=true" >> $GITHUB_ENV
           fi
-
+          
       - name: Fetch Release Notes
         if: env.changes_made == 'true'
         env:
@@ -126,7 +119,7 @@ jobs:
           RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
           tail -n +2 release_notes.txt > release_notes_trimmed.txt
-
+          
       - name: Create PR body file
         if: env.changes_made == 'true'
         run: |
@@ -150,7 +143,7 @@ jobs:
           echo "" >> pr_body.txt
           cat release_notes_trimmed.txt >> pr_body.txt
           echo "" >> pr_body.txt
-
+          
       - name: Create Draft Pull Request
         if: env.changes_made == 'true'
         env:
@@ -165,7 +158,7 @@ jobs:
             --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
             --repo $SOURCE_REPO \
             --draft
-
+          
       - name: Clean up
         run: |
           rm -rf raspycam_unzipped RasPyCam-ARM.tar.gz RasPyCam-ARM64.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
