@@ -186,7 +186,7 @@ jobs:
         run: |
           echo "# Release Summary" > pr_body
           echo "" >> pr_body
-          echo "This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyCam](https://github.com/kaihokori/raspycam) repository." >> pr_body
+          echo "This PR updates the RasPyCam executable to the latest version (\`${{ github.event.release.tag_name }}\`), generated from the [RasPyCam](https://github.com/kaihokori/raspycam) repository." >> pr_body
           echo "" >> pr_body
           echo "## Changes Introduced" >> pr_body
           echo "" >> pr_body
