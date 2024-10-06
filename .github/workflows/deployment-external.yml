@@ -9,9 +9,61 @@ on:
       - published
 
 jobs:
+  release-cleanup:
+    name: Release Cleanup
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
+      - name: Delete all draft releases and their tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v4+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[] | select(.draft == true) | .id,.tag_name')
+          if [ -n "$releases" ]; then
+            echo "$releases" | while read -r release_id && read -r tag_name; do
+              echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v4+json" \
+                https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
+              git tag -d "$tag_name" || true
+              git push origin --delete "$tag_name" || true
+            done
+          else
+            echo "No draft releases found."
+          fi
+
+      - name: Delete tags without releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags
+          all_tags=$(git tag)
+          release_tags=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v4+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[].tag_name')
+          echo "$all_tags" | while read -r tag; do
+            if ! echo "$release_tags" | grep -q "$tag"; then
+              echo "Deleting tag: $tag (no associated release)"
+              git tag -d "$tag" || true
+              git push origin --delete "$tag" || true
+            fi
+          done
+
   share:
     name: Share
     runs-on: self-hosted
+    needs: release-cleanup
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
