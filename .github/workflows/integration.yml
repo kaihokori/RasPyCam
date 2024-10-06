@@ -51,7 +51,6 @@ jobs:
                 "false"
               end' runners.json)
           fi
-  
           echo "arm_online=$arm_online" >> $GITHUB_ENV
 
       - name: Set Outputs
