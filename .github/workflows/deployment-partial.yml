@@ -164,22 +164,22 @@ jobs:
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
           pyinstaller raspycam.spec --noconfirm
-          mv dist/raspycam dist/raspycam-arm
+          mv dist/raspycam dist/RasPyCam-ARM
 
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          tar -czvf release/raspycam-arm.tar.gz -C dist raspycam-arm
+          tar -czvf release/RasPyCam-ARM.tar.gz -C dist RasPyCam-ARM
 
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat release-info/upload_url.txt)
-          curl -s --data-binary @release/raspycam-arm.tar.gz \
+          curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam-arm.tar.gz"
+            "$upload_url?name=RasPyCam-ARM.tar.gz"
 
       - name: Cleanup build artifacts
         run: |
