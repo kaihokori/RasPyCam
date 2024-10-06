@@ -137,7 +137,7 @@ jobs:
 
   release-arm:
     name: Partial Release ARM
-    runs-on: ARM64  # This should be changed to ARM when the ARM-based Pi is set up as a self-hosted runner
+    runs-on: ARM64  # This should be changed to 'ARM' when the ARM-based Pi is set up as a self-hosted runner
     needs: release-arm64
     steps:
       - name: Checkout backend repository
@@ -150,22 +150,22 @@ jobs:
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
           pyinstaller raspycam.spec --noconfirm
-          mv dist/raspycam dist/RasPyCam-64
+          mv dist/raspycam dist/RasPyCam-ARM
 
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          tar -czvf release/RasPyCam-64.tar.gz -C dist RasPyCam-64
+          tar -czvf release/RasPyCam-ARM.tar.gz -C dist RasPyCam-ARM
 
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @release/RasPyCam-64.tar.gz \
+          curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=RasPyCam-64.tar.gz"
+            "$upload_url?name=RasPyCam-ARM.tar.gz"
 
       - name: Cleanup build artifacts
         run: |
