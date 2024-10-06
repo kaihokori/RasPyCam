@@ -131,6 +131,10 @@ jobs:
             -H "Content-Type: application/octet-stream" \
             "$upload_url?name=RasPyCam-ARM64.tar.gz"
 
+      - name: Cleanup build artifacts
+        run: |
+          rm -rf venv dist release upload_url.txt new_tag
+
   release-arm:
     name: Partial Release ARM
     runs-on: ARM64  # This should be changed to ARM when the ARM-based Pi is set up as a self-hosted runner
@@ -162,3 +166,7 @@ jobs:
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
             "$upload_url?name=RasPyCam-64.tar.gz"
+
+      - name: Cleanup build artifacts
+        run: |
+          rm -rf venv dist release upload_url.txt new_tag
