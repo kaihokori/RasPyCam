@@ -27,8 +27,8 @@ jobs:
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
           asset_url_arm=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM.tar.gz") | .browser_download_url')
           asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM64.tar.gz") | .browser_download_url')
-          curl -L -o raspycam-arm.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm"
-          curl -L -o raspycam-arm64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
+          curl -L -o RasPyCam-ARM.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm"
+          curl -L -o RasPyCam-ARM64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
 
       - name: Uncompress downloaded executables
         run: |
