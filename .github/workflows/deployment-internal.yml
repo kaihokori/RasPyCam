@@ -135,14 +135,14 @@ jobs:
               "draft": true,
               "generate_release_notes": true
             }')
-          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
+          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url
 
       - name: Save upload URL and new tag as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-info
           path: |
-            upload_url.txt
+            upload_url
             new_tag
           retention-days: 1
 
@@ -178,7 +178,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(cat release-info/upload_url.txt)
+          upload_url=$(cat release-info/upload_url)
           curl -s --data-binary @release/RasPyCam-ARM64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
@@ -220,7 +220,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(cat release-info/upload_url.txt)
+          upload_url=$(cat release-info/upload_url)
           curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
