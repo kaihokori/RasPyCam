@@ -9,13 +9,39 @@ on:
       - main
 
 jobs:
-  release:
-    name: Partial Release
-    runs-on: pi-five
+  mirror:
+    name: Mirror
+    runs-on: ARM64
+    if: false
     steps:
-      - name: Checkout backend repository
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Push to Bitbucket
+        env:
+          BITBUCKET_USERNAME: ${{ secrets.BITBUCKET_USERNAME }}
+          BITBUCKET_PASSWORD: ${{ secrets.BITBUCKET_PASSWORD }}
+          BITBUCKET_REPO: ${{ vars.BITBUCKET_REPO }}
+        run: |
+          git remote add bitbucket https://${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}@bitbucket.org/$BITBUCKET_REPO.git
+          git push bitbucket --all --force
+          git push bitbucket --tags --force
+      - name: Clean up machine
+        if: always()
+        run: |
+          git remote remove bitbucket
+          git reset --hard
+          git clean -fdx
+
+  release-cleanup:
+    name: Release Cleanup
+    runs-on: ARM64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
       - name: Clear Git cache
         run: |
           git rm -r --cached .
@@ -26,14 +52,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
+            -H "Accept: application/vnd.github.v4+json" \
             https://api.github.com/repos/kaihokori/raspycam/releases \
             | jq -r '.[] | select(.draft == true) | .id,.tag_name')
           if [ -n "$releases" ]; then
             echo "$releases" | while read -r release_id && read -r tag_name; do
               echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
               curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
+                -H "Accept: application/vnd.github.v4+json" \
                 https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
               git tag -d "$tag_name" || true
               git push origin --delete "$tag_name" || true
@@ -49,7 +75,7 @@ jobs:
           git fetch --tags
           all_tags=$(git tag)
           release_tags=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
+            -H "Accept: application/vnd.github.v4+json" \
             https://api.github.com/repos/kaihokori/raspycam/releases \
             | jq -r '.[].tag_name')
           echo "$all_tags" | while read -r tag; do
@@ -59,6 +85,14 @@ jobs:
               git push origin --delete "$tag" || true
             fi
           done
+
+  release:
+    name: Release
+    runs-on: ARM64
+    needs: release-cleanup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Get latest tag
         id: get_tag
@@ -79,7 +113,9 @@ jobs:
           fi
           echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
 
-      - name: Create new tag
+      - name: Create new tag and release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           new_tag=$(cat new_tag)
           if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
@@ -88,29 +124,9 @@ jobs:
             git tag $new_tag
             git push origin $new_tag
           fi
-
-      - name: Set up dependencies and build executable
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
-          pyinstaller raspycam.spec --noconfirm
-
-      - name: Archive build artifacts
-        run: |
-          mkdir -p release
-          cp -r dist/raspycam ./release/raspycam
-          tar -czvf release/raspycam.tar.gz -C release raspycam
-
-      - name: Generate GitHub draft release
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
           response=$(curl -s -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
+            -H "Accept: application/vnd.github.v4+json" \
             https://api.github.com/repos/kaihokori/raspycam/releases \
             -d '{
               "tag_name": "'${{ env.NEW_TAG }}'",
@@ -121,16 +137,95 @@ jobs:
             }')
           echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
 
+      - name: Save upload URL and new tag as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-info
+          path: |
+            upload_url.txt
+            new_tag
+          retention-days: 1
+
+  executable-arm64:
+    name: Executable (ARM64)
+    runs-on: ARM64
+    needs: release
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Download release information
+        uses: actions/download-artifact@v4
+        with:
+          name: release-info
+          path: ./release-info
+
+      - name: Set up dependencies and build executable
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
+          pyinstaller raspycam.spec --noconfirm
+          mv dist/raspycam dist/RasPyCam-ARM64
+
+      - name: Archive build artifacts
+        run: |
+          mkdir -p release
+          tar -czvf release/RasPyCam-ARM64.tar.gz -C dist RasPyCam-ARM64
+
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(cat upload_url.txt)
-          curl -s --data-binary @release/raspycam.tar.gz \
+          upload_url=$(cat release-info/upload_url.txt)
+          curl -s --data-binary @release/RasPyCam-ARM64.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam.tar.gz"        
+            "$upload_url?name=RasPyCam-ARM64.tar.gz"
 
-      - name: Clean up
+      - name: Cleanup build artifacts
         run: |
-          rm -rf venv dist build release
+          rm -rf venv dist release release-info
+
+  executable-arm:
+    name: Executable (ARM)
+    runs-on: ARM64  # Update when self-hosted ARM runner is available
+    needs: release
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Download release information
+        uses: actions/download-artifact@v4
+        with:
+          name: release-info
+          path: ./release-info
+
+      - name: Set up dependencies and build executable
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
+          pyinstaller raspycam.spec --noconfirm
+          mv dist/raspycam dist/RasPyCam-ARM
+
+      - name: Archive build artifacts
+        run: |
+          mkdir -p release
+          tar -czvf release/RasPyCam-ARM.tar.gz -C dist RasPyCam-ARM
+
+      - name: Upload executable to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upload_url=$(cat release-info/upload_url.txt)
+          curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            "$upload_url?name=RasPyCam-ARM.tar.gz"
+
+      - name: Cleanup build artifacts
+        run: |
+          rm -rf venv dist release release-info
