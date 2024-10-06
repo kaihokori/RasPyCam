@@ -11,7 +11,7 @@ on:
 jobs:
   check-runners:
     if: github.event_name == 'push'
-    name: Check ARM Runner Status
+    name: ARM Status
     runs-on: ARM64
     outputs:
       arm_online: ${{ steps.set_outputs.outputs.arm_online }}
