@@ -36,7 +36,22 @@ jobs:
       - name: Check ARM Runner
         id: check_arm
         run: |
-          arm_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "arm") | .status == "online") then "true" else "false" end // "false"' runners.json)
+          if ! jq empty runners.json > /dev/null 2>&1; then
+            echo "Invalid JSON or null response"
+            arm_online="false"
+          else
+            arm_online=$(jq -r '
+              if (.runners? | length > 0) then
+                if (.runners[]? | select(.labels[]? | .name == "arm")? | .status == "online") then
+                  "true"
+                else
+                  "false"
+                end
+              else
+                "false"
+              end' runners.json)
+          fi
+  
           echo "arm_online=$arm_online" >> $GITHUB_ENV
 
       - name: Set Outputs
