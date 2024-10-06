@@ -1,6 +1,7 @@
 import argparse
 from core.process import start_background_process
 
+
 def main(args):
     """Main function to start the background process using provided config file."""
     config_filepath = args.config_filepath
@@ -8,6 +9,7 @@ def main(args):
         start_background_process(config_filepath)
     except KeyboardInterrupt:
         print("Server stopped.")
+
 
 if __name__ == "__main__":
     # Argument parser for reading config file from command line input
