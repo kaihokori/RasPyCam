@@ -119,14 +119,13 @@ jobs:
               "draft": true,
               "generate_release_notes": true
             }')
-          upload_url=$(echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//')
-          echo "::set-output name=upload_url::$upload_url"
+          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
 
       - name: Cache the upload URL
         uses: actions/cache@v4
         with:
           path: upload_url.txt
-          key: ${{ github.sha }}-upload-url
+          key: upload-url-${{ github.run_id }}
 
       - name: Upload executable to GitHub release
         env:
@@ -154,9 +153,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: upload_url.txt
-          key: ${{ github.sha }}-upload-url
+          key: upload-url-${{ github.run_id }}
           restore-keys: |
-            ${{ github.sha }}-upload-url
+            upload-url-${{ github.run_id }}
 
       - name: Set up dependencies and build executable
         run: |
@@ -176,7 +175,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=${{ needs.release-arm64.outputs.upload_url }}
+          upload_url=$(cat upload_url.txt)
           curl -s --data-binary @release/RasPyCam-ARM.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
