@@ -121,6 +121,12 @@ jobs:
             }')
           echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url.txt
 
+      - name: Cache the upload URL
+        uses: actions/cache@v4
+        with:
+          path: upload_url.txt
+          key: ${{ github.sha }}-upload-url
+
       - name: Upload executable to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,6 +148,14 @@ jobs:
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
+
+      - name: Restore cached upload URL
+        uses: actions/cache@v4
+        with:
+          path: upload_url.txt
+          key: ${{ github.sha }}-upload-url
+          restore-keys: |
+            ${{ github.sha }}-upload-url
 
       - name: Set up dependencies and build executable
         run: |
