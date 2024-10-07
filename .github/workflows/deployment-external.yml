@@ -136,17 +136,14 @@ jobs:
 
       - name: Move executables to target directory
         run: |
-            pwd
-            ls raspycam_unzipped
-            ls raspycam_unzipped/arm/raspycam
-            rm -rf rpi_cam_web_interface/etc/raspycam
-            mkdir -p rpi_cam_web_interface/etc/raspycam/arm rpi_cam_web_interface/etc/raspycam/arm64
-            mv raspycam_unzipped/arm/raspycam rpi_cam_web_interface/etc/raspycam/arm/
-            mv raspycam_unzipped/arm64/raspycam rpi_cam_web_interface/etc/raspycam/arm64/
-            mv etc/raspycam/arm/raspycam/* etc/raspycam/arm/
-            mv etc/raspycam/arm64/raspycam/* etc/raspycam/arm64/
-            rmdir etc/raspycam/arm/raspycam etc/raspycam/arm64/raspycam
-
+          pwd
+          ls raspycam_unzipped
+          ls raspycam_unzipped/arm/raspycam
+          rm -rf rpi_cam_web_interface/etc/raspycam
+          mkdir -p rpi_cam_web_interface/etc/raspycam/arm rpi_cam_web_interface/etc/raspycam/arm64
+          mv raspycam_unzipped/arm/raspycam/* rpi_cam_web_interface/etc/raspycam/arm/
+          mv raspycam_unzipped/arm64/raspycam/* rpi_cam_web_interface/etc/raspycam/arm64/
+          rmdir raspycam_unzipped/arm/raspycam raspycam_unzipped/arm64/raspycam
 
       - name: Stage, Commit, and Push Changes
         id: commit_changes
