@@ -80,7 +80,6 @@ jobs:
           asset_url_arm=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-arm.tar.gz") | .browser_download_url')
           asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-arm64.tar.gz") | .browser_download_url')
           curl -L -o raspycam-arm.tar.gz -H "Authorization: token $PAT" "$asset_url_arm"
-          echo
           curl -L -o raspycam-arm64.tar.gz -H "Authorization: token $PAT" "$asset_url_arm64"
 
       - name: Uncompress downloaded executables
@@ -88,9 +87,6 @@ jobs:
           mkdir -p raspycam_unzipped/arm raspycam_unzipped/arm64
           tar -xzf raspycam-arm.tar.gz -C raspycam_unzipped/arm
           tar -xzf raspycam-arm64.tar.gz -C raspycam_unzipped/arm64
-          pwd
-          ls raspycam_unzipped
-          ls raspycam_unzipped/arm
 
       - name: Sync fork with upstream and delete old branches
         env:
@@ -136,9 +132,6 @@ jobs:
 
       - name: Move executables to target directory
         run: |
-          pwd
-          ls raspycam_unzipped
-          ls raspycam_unzipped/arm/raspycam
           rm -rf rpi_cam_web_interface/etc/raspycam
           mkdir -p rpi_cam_web_interface/etc/raspycam/arm rpi_cam_web_interface/etc/raspycam/arm64
           mv raspycam_unzipped/arm/raspycam/* rpi_cam_web_interface/etc/raspycam/arm/
