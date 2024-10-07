@@ -32,15 +32,19 @@ There are two ways of using RasPyCam:
 
 <h1>Requirements</h1>
 
-Running the RasPyCam application requires installation of the [PiCamera 2](https://pypi.org/project/picamera2/0.2.2/), [OpenCV](https://pypi.org/project/opencv-python/), and [Pillow](https://pypi.org/project/pillow/) libraries. You can install these dependencies using the following commands: 
+Depending on how you run the program, you may need to install some dependencies, including [PiCamera 2](https://pypi.org/project/picamera2/0.2.2/), [OpenCV](https://pypi.org/project/opencv-python/), and [Pillow](https://pypi.org/project/pillow/). 
+
+If you would like to run the source code, you can install these libraries using the following commands: 
 
 ```bash
 pip install picamera2 opencv-python Pillow
 ```
 
+If you would like to run the program through it's executable format, given in the latest release or in the [RPi Cam Web Interface](https://github.com/silvanmelchior/RPi_Cam_Web_Interface) repository, you do not have to install anything since the dependencies are already packaged inside the program. 
+
 <h1>Installation</h1>
 
-If you intend to use RasPyCam as a standalone program, you can follow the following steps:
+If you intend to use RasPyCam as a standalone program as source code (python files), you can follow the following steps, otherwise jump to step 2:
 
 1. Clone the repository to your Raspberry Pi:
 ```bash
@@ -53,8 +57,16 @@ cd raspycam/app
 > [!NOTE]
 > Depending on your Pi's configuration, you may need to run the program with `sudo` privileges. This is because the program requires read/write access to the tmp and var directories which are restricted to root access. 
 
+If you've downloaded the source code, you can run the program using the following command (after navigating to where it's stored using `cd`): 
+
 ```bash
 python main.py
+```
+
+If you've downloaded the executable, you can run the program using the following command (after navigating to where it's stored using `cd`): 
+
+```
+./raspycam
 ```
 
 <h1>Usage</h1>
@@ -86,8 +98,16 @@ If the program is initated without a specified configuration file, the program w
 
 To stop the program, you can either send SIGINT or SIGTERM signals to the program. This can be done by either pressing `Ctrl+C` in the terminal running the program or by using the `kill` command.
 
+If you've launched the program using the source code, run the following command: 
+
 ```bash
 kill -15 $(pgrep -f main.py)
+```
+
+If you've launched the program using the executable, run the following command: 
+
+```bash
+kill -15 $(pgrep -f raspycam)
 ```
 
 <h1>Contributing</h1>
