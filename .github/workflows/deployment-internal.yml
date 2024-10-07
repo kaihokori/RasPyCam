@@ -9,9 +9,9 @@ on:
       - main
 
 jobs:
-  executable-arm64:
-    name: Executable (ARM64)
-    runs-on: ARM64
+  release:
+    name: Partial Release
+    runs-on: pi-five
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -100,7 +100,8 @@ jobs:
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          tar -czvf release/raspycam.tar.gz -C dist raspycam
+          cp -r dist/raspycam ./release/raspycam
+          tar -czvf release/raspycam.tar.gz -C release raspycam
 
       - name: Generate GitHub draft release
         id: create_release
@@ -128,16 +129,8 @@ jobs:
           curl -s --data-binary @release/raspycam.tar.gz \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            "$upload_url?name=raspycam.tar.gz"
+            "$upload_url?name=raspycam.tar.gz"        
 
-      - name: Save upload URL and new tag as artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: release-info
-          path: |
-            upload_url.txt
-          retention-days: 1
-
-      - name: Cleanup build artifacts
+      - name: Clean up
         run: |
-          rm -rf venv dist release upload_url.txt new_tag
+          rm -rf venv dist build release
