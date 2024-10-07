@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies for coverage
         run: |
           sudo apt update
-          sudo apt install libcap-dev python3-pytest libopencv-dev python3-pytest-cov -y
+          sudo apt install libcap-dev python3-pytest libopencv-dev python3-opencv python3-pytest-cov -y
 
       - name: Run pytest and generate coverage report
         run: |
