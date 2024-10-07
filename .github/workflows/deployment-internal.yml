@@ -166,8 +166,7 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
-          pip install rpi-libcamera --config-settings="-Dversion=unknown"
-          pip install rpi-kms picamera2 opencv-python
+          pip install rpi-libcamera rpi-kms picamera2 opencv-python
           pip install pyinstaller
           pyinstaller raspycam.spec
   
@@ -206,8 +205,7 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
-          pip install rpi-libcamera --config-settings="-Dversion=unknown"
-          pip install rpi-kms picamera2 opencv-python
+          pip install rpi-libcamera rpi-kms picamera2 opencv-python
           pip install pyinstaller
           pyinstaller raspycam.spec
 
