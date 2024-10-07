@@ -153,14 +153,14 @@ jobs:
 
   executable-arm:
     name: Executable (ARM)
-    runs-on: ARM64  # Change this to ARM when the runner is set up
+    runs-on: ARM64  # Change this to 'ARM' when the runner is set up
     needs: release
     steps:
       - name: Create modified spec file
         run: |
           cp raspycam.spec raspycam-arm.spec
-          sed -i 's/raspycam/raspycam-arm/g' raspycam-arm.spec
-
+          sed -i 's/raspycam/raspycam/g' raspycam-arm.spec  # Ensure no suffix added
+  
       - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
@@ -169,13 +169,13 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-          pyinstaller raspycam-arm.spec
-
+          pyinstaller --name raspycam raspycam-arm.spec
+  
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          cp -r dist/raspycam-arm ./release/raspycam-arm
-          tar -czvf release/raspycam-arm.tar.gz -C release raspycam-arm
+          cp -r dist/raspycam ./release/raspycam
+          tar -czvf release/raspycam-arm.tar.gz -C release raspycam
 
       - name: Upload executable to GitHub release
         env:
@@ -199,7 +199,7 @@ jobs:
       - name: Create modified spec file
         run: |
           cp raspycam.spec raspycam-arm64.spec
-          sed -i 's/raspycam/raspycam-arm64/g' raspycam-arm64.spec
+          sed -i 's/raspycam/raspycam/g' raspycam-arm64.spec  # Ensure no suffix added
 
       - name: Set up dependencies and build executable
         run: |
@@ -209,13 +209,13 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-          pyinstaller raspycam-arm64.spec
-  
+          pyinstaller --name raspycam raspycam-arm64.spec
+
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          cp -r dist/raspycam-arm64 ./release/raspycam-arm64
-          tar -czvf release/raspycam-arm64.tar.gz -C release raspycam-arm64
+          cp -r dist/raspycam ./release/raspycam
+          tar -czvf release/raspycam-arm64.tar.gz -C release raspycam
 
       - name: Upload executable to GitHub release
         env:
