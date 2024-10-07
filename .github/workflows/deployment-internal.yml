@@ -89,13 +89,18 @@ jobs:
             git push origin $new_tag
           fi
 
+      - name: Create modified spec file for ARM64
+        run: |
+          cp raspycam.spec raspycam-arm64.spec
+          sed -i 's/raspycam/raspycam-arm64/g' raspycam-arm64.spec
+
       - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
-          pyinstaller configurations/raspycam-arm64.spec --noconfirm
+          pyinstaller raspycam-arm64.spec --noconfirm
 
       - name: Archive build artifacts
         run: |
