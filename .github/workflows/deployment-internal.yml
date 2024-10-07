@@ -161,7 +161,7 @@ jobs:
           cp raspycam.spec raspycam-arm.spec
           sed -i 's/raspycam/raspycam-arm/g' raspycam-arm.spec
 
-      - name: Set up dependencies
+      - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
           source venv/bin/activate
@@ -169,27 +169,7 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-
-      - name: Check if running in a venv
-        run: |
-          if [ -z "$VIRTUAL_ENV" ]; then
-            echo "Not running in a virtual environment."
-          else
-            echo "Running in a virtual environment: $VIRTUAL_ENV"
-          fi
-
-      - name: Build executable
-        run: |
-          if [ -z "$VIRTUAL_ENV" ]; then
-            echo "Not running in a virtual environment."
-          else
-            source venv/bin/activate
-          fi
           pyinstaller raspycam-arm.spec
-
-      - name: Deactivate virtual environment
-        run: |
-          deactivate || echo "No virtual environment to deactivate"
 
       - name: Archive build artifacts
         run: |
@@ -221,7 +201,7 @@ jobs:
           cp raspycam.spec raspycam-arm64.spec
           sed -i 's/raspycam/raspycam-arm64/g' raspycam-arm64.spec
 
-      - name: Set up dependencies
+      - name: Set up dependencies and build executable
         run: |
           python3 -m venv venv
           source venv/bin/activate
@@ -229,28 +209,8 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-
-      - name: Check if running in a venv
-        run: |
-          if [ -z "$VIRTUAL_ENV" ]; then
-            echo "Not running in a virtual environment."
-          else
-            echo "Running in a virtual environment: $VIRTUAL_ENV"
-          fi
-
-      - name: Build executable
-        run: |
-          if [ -z "$VIRTUAL_ENV" ]; then
-            echo "Not running in a virtual environment."
-          else
-            source venv/bin/activate
-          fi
-          pyinstaller raspycam-arm64.spec
-
-      - name: Deactivate virtual environment
-        run: |
-          deactivate || echo "No virtual environment to deactivate"
-
+          pyinstaller raspycam-arm.spec
+  
       - name: Archive build artifacts
         run: |
           mkdir -p release
