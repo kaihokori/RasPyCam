@@ -160,7 +160,9 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
-          pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
+          pip install rpi-libcamera --config-settings="-Dversion=unknown"
+          pip install rpi-kms picamera2 opencv-python
+          pip install pyinstaller
 
       - name: Check if running in a venv
         run: |
