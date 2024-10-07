@@ -84,9 +84,9 @@ jobs:
 
       - name: Uncompress downloaded executables
         run: |
-          mkdir raspycam_unzipped
-          tar -xzf raspycam-arm.tar.gz -C raspycam_unzipped
-          tar -xzf raspycam-arm64.tar.gz -C raspycam_unzipped
+          mkdir -p raspycam_unzipped/arm raspycam_unzipped/arm64
+          tar -xzf raspycam-arm.tar.gz -C raspycam_unzipped/arm
+          tar -xzf raspycam-arm64.tar.gz -C raspycam_unzipped/arm64
 
       - name: Sync fork with upstream and delete old branches
         env:
@@ -132,9 +132,10 @@ jobs:
 
       - name: Move executables to target directory
         run: |
-            mkdir -p rpi_cam_web_interface/etc/raspycam
-            mv raspycam_unzipped/raspycam-arm rpi_cam_web_interface/etc/raspycam/arm
-            mv raspycam_unzipped/raspycam-arm64 rpi_cam_web_interface/etc/raspycam/arm64
+            mkdir -p rpi_cam_web_interface/etc/raspycam/arm
+            mkdir -p rpi_cam_web_interface/etc/raspycam/arm64
+            mv raspycam_unzipped/arm/raspycam-arm rpi_cam_web_interface/etc/raspycam/arm/raspycam
+            mv raspycam_unzipped/arm64/raspycam-arm64 rpi_cam_web_interface/etc/raspycam/arm64/raspycam
 
       - name: Stage, Commit, and Push Changes
         id: commit_changes
