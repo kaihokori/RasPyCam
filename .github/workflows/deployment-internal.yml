@@ -95,7 +95,7 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install wheel rpi-libcamera rpi-kms picamera2 numpy Pillow opencv-python pyinstaller
-          pyinstaller raspycam.spec --noconfirm
+          pyinstaller configurations/raspycam-arm64.spec --noconfirm
 
       - name: Archive build artifacts
         run: |
