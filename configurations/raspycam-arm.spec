@@ -1,10 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+
+base_path = os.path.abspath(os.path.dirname(__file__))
+
 a = Analysis(
-    ['../app/main.py'],
-    pathex=['../app/core', '../app/utilities'],
+    [os.path.join(base_path, '../app/main.py')],
+    pathex=[os.path.join(base_path, '../app/core'), os.path.join(base_path, '../app/utilities')],
     binaries=[('/usr/lib/aarch64-linux-gnu/libpython3.11.so', '.')],
-    datas=[('../app/core/*', 'core'), ('../app/utilities/*', 'utilities')],
+    datas=[(os.path.join(base_path, '../app/core/*'), 'core'), (os.path.join(base_path, '../app/utilities/*'), 'utilities')],
     hiddenimports=['picamera2', 'numpy', 'PIL', 'cv2', 'libcamera', 'simplejpeg', 'v4l2'],
     hookspath=[],
     hooksconfig={},
