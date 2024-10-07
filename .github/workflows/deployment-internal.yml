@@ -1,0 +1,265 @@
+name: Deployment (Partial Release)
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    name: Mirror
+    runs-on: ARM64
+    if: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Bitbucket
+        env:
+          BITBUCKET_USERNAME: ${{ secrets.BITBUCKET_USERNAME }}
+          BITBUCKET_PASSWORD: ${{ secrets.BITBUCKET_PASSWORD }}
+          BITBUCKET_REPO: ${{ vars.BITBUCKET_REPO }}
+        run: |
+          git remote add bitbucket https://${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}@bitbucket.org/$BITBUCKET_REPO.git
+          git push bitbucket --all --force
+          git push bitbucket --tags --force
+      - name: Clean up machine
+        if: always()
+        run: |
+          git remote remove bitbucket
+          git reset --hard
+          git clean -fdx
+
+  release-cleaup:
+    name: Release Cleanup
+    runs-on: ARM64
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
+      - name: Delete all draft releases and their tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[] | select(.draft == true) | .id,.tag_name')
+          if [ -n "$releases" ]; then
+            echo "$releases" | while read -r release_id && read -r tag_name; do
+              echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v3+json" \
+                https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
+              git tag -d "$tag_name" || true
+              git push origin --delete "$tag_name" || true
+            done
+          else
+            echo "No draft releases found."
+          fi
+
+      - name: Delete tags without releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags
+          all_tags=$(git tag)
+          release_tags=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[].tag_name')
+          echo "$all_tags" | while read -r tag; do
+            if ! echo "$release_tags" | grep -q "$tag"; then
+              echo "Deleting tag: $tag (no associated release)"
+              git tag -d "$tag" || true
+              git push origin --delete "$tag" || true
+            fi
+          done
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          if [ -z "${{ env.LATEST_TAG }}" ]; then
+            echo "v1" > new_tag
+          else
+            version_number=$(echo "${{ env.LATEST_TAG }}" | grep -o '[0-9]*$')
+            new_version=$((version_number+1))
+            echo "v$new_version" > new_tag
+          fi
+          echo "NEW_TAG=$(cat new_tag)" >> $GITHUB_ENV
+
+  release:
+    name: Release
+    runs-on: ARM64
+    steps:
+      - name: Create new tag
+        run: |
+          new_tag=$(cat new_tag)
+          if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
+            echo "Tag $new_tag already exists. Skipping tag creation."
+          else
+            git tag $new_tag
+            git push origin $new_tag
+          fi
+
+      - name: Generate GitHub draft release
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          response=$(curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            -d '{
+              "tag_name": "'${{ env.NEW_TAG }}'",
+              "name": "Release '${{ env.NEW_TAG }}'",
+              "prerelease": false,
+              "draft": true,
+              "generate_release_notes": true
+            }')
+          echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url
+
+      - name: Save upload URL and new tag as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+            name: release-info
+            path: |
+                upload_url
+                new_tag
+            retention-days: 1
+
+  executable-arm:
+    name: Executable (ARM)
+    runs-on: ARM64  # Change this to ARM when the runner is set up
+    steps:
+      - name: Create modified spec file
+        run: |
+          cp raspycam.spec raspycam-arm.spec
+          sed -i 's/raspycam/raspycam-arm/g' raspycam-arm.spec
+
+      - name: Set up dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install rpi-libcamera --config-settings="-Dversion=unknown"
+          pip install rpi-kms picamera2 opencv-python
+          pip install pyinstaller
+
+      - name: Check if running in a venv
+        run: |
+          if [ -z "$VIRTUAL_ENV" ]; then
+            echo "Not running in a virtual environment."
+          else
+            echo "Running in a virtual environment: $VIRTUAL_ENV"
+          fi
+
+      - name: Build executable
+        run: |
+          if [ -z "$VIRTUAL_ENV" ]; then
+            echo "Not running in a virtual environment."
+          else
+            source venv/bin/activate
+          fi
+          pyinstaller raspycam-arm.spec
+
+      - name: Deactivate virtual environment
+        run: |
+          deactivate || echo "No virtual environment to deactivate"
+
+      - name: Archive build artifacts
+        run: |
+          mkdir -p release
+          cp -r dist/raspycam-arm ./release/raspycam-arm
+          tar -czvf release/raspycam-arm.tar.gz -C release raspycam-arm
+
+      - name: Upload executable to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upload_url=$(cat upload_url)
+          curl -s --data-binary @release/raspycam-arm.tar.gz \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            "$upload_url?name=raspycam-arm.tar.gz"        
+
+      - name: Clean up
+        run: |
+          rm -rf venv dist build release
+
+  executable-arm64:
+    name: Executable (ARM64)
+    runs-on: ARM64
+    steps:
+      - name: Create modified spec file
+        run: |
+          cp raspycam.spec raspycam-arm64.spec
+          sed -i 's/raspycam/raspycam-arm64/g' raspycam-arm64.spec
+
+      - name: Set up dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install rpi-libcamera --config-settings="-Dversion=unknown"
+          pip install rpi-kms picamera2 opencv-python
+          pip install pyinstaller
+
+      - name: Check if running in a venv
+        run: |
+          if [ -z "$VIRTUAL_ENV" ]; then
+            echo "Not running in a virtual environment."
+          else
+            echo "Running in a virtual environment: $VIRTUAL_ENV"
+          fi
+
+      - name: Build executable
+        run: |
+          if [ -z "$VIRTUAL_ENV" ]; then
+            echo "Not running in a virtual environment."
+          else
+            source venv/bin/activate
+          fi
+          pyinstaller raspycam-arm64.spec
+
+      - name: Deactivate virtual environment
+        run: |
+          deactivate || echo "No virtual environment to deactivate"
+
+      - name: Archive build artifacts
+        run: |
+          mkdir -p release
+          cp -r dist/raspycam-arm64 ./release/raspycam-arm64
+          tar -czvf release/raspycam-arm64.tar.gz -C release raspycam-arm64
+
+      - name: Upload executable to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upload_url=$(cat upload_url)
+          curl -s --data-binary @release/raspycam-arm64.tar.gz \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            "$upload_url?name=raspycam-arm64.tar.gz"        
+
+      - name: Clean up
+        run: |
+          rm -rf venv dist build release
