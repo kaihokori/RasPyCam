@@ -1,4 +1,4 @@
-name: Deployment (Full Release)
+name: Deployment (External)
 
 permissions:
   contents: write
@@ -9,9 +9,61 @@ on:
       - published
 
 jobs:
-  pull_request:
-    name: Full Release
-    runs-on: pi-five
+  release-cleanup:
+    name: Release Cleanup
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
+      - name: Delete all draft releases and their tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v4+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[] | select(.draft == true) | .id,.tag_name')
+          if [ -n "$releases" ]; then
+            echo "$releases" | while read -r release_id && read -r tag_name; do
+              echo "Deleting draft release with tag: $tag_name (ID: $release_id)"
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v4+json" \
+                https://api.github.com/repos/kaihokori/raspycam/releases/$release_id
+              git tag -d "$tag_name" || true
+              git push origin --delete "$tag_name" || true
+            done
+          else
+            echo "No draft releases found."
+          fi
+
+      - name: Delete tags without releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags
+          all_tags=$(git tag)
+          release_tags=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v4+json" \
+            https://api.github.com/repos/kaihokori/raspycam/releases \
+            | jq -r '.[].tag_name')
+          echo "$all_tags" | while read -r tag; do
+            if ! echo "$release_tags" | grep -q "$tag"; then
+              echo "Deleting tag: $tag (no associated release)"
+              git tag -d "$tag" || true
+              git push origin --delete "$tag" || true
+            fi
+          done
+
+  share:
+    name: Share
+    runs-on: self-hosted
+    needs: release-cleanup
     steps:
       - name: Checkout backend repository
         uses: actions/checkout@v4
@@ -19,20 +71,23 @@ jobs:
       - name: Install GitHub CLI
         run: |
           sudo apt-get install -y gh
-
-      - name: Download executable from release
+          
+      - name: Download executables from release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.tar.gz") | .browser_download_url')
-          curl -L -o raspycam.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
-          
-      - name: Uncompress downloaded executable
+          asset_url_arm=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM.tar.gz") | .browser_download_url')
+          asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM64.tar.gz") | .browser_download_url')
+          curl -L -o RasPyCam-ARM.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm"
+          curl -L -o RasPyCam-ARM64.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url_arm64"
+
+      - name: Uncompress downloaded executables
         run: |
           mkdir raspycam_unzipped
-          tar -xzf raspycam.tar.gz -C raspycam_unzipped
-          
+          tar -xzf RasPyCam-ARM.tar.gz -C raspycam_unzipped
+          tar -xzf RasPyCam-ARM64.tar.gz -C raspycam_unzipped
+
       - name: Sync fork with upstream and delete old branches
         env:
           PAT: ${{ secrets.PAT }}
@@ -41,13 +96,10 @@ jobs:
         run: |
           git clone https://x-access-token:$PAT@github.com/$FORKED_REPO.git rpi_cam_web_interface
           cd rpi_cam_web_interface
-          
           git fetch https://github.com/$SOURCE_REPO.git master
           git checkout master
           git merge FETCH_HEAD
-          
           git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
-          
           git push origin master --force
 
       - name: Clear Git cache
@@ -78,10 +130,11 @@ jobs:
             echo "Directory etc/raspycam does not exist, skipping reset."
           fi
 
-      - name: Move executable to target directory
+      - name: Move executables to target directory
         run: |
-          mkdir -p rpi_cam_web_interface/etc/raspycam/
-          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
+            mkdir -p rpi_cam_web_interface/etc/raspycam
+            mv raspycam_unzipped/RasPyCam-ARM rpi_cam_web_interface/etc/raspycam/arm
+            mv raspycam_unzipped/RasPyCam-ARM64 rpi_cam_web_interface/etc/raspycam/arm64
 
       - name: Stage, Commit, and Push Changes
         id: commit_changes
@@ -155,4 +208,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf raspycam_unzipped raspycam.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
+          rm -rf raspycam_unzipped RasPyCam-ARM.tar.gz RasPyCam-ARM64.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
