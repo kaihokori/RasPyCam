@@ -77,16 +77,16 @@ jobs:
           PAT: ${{ secrets.PAT }}
         run: |
           release_response=$(curl -s -H "Authorization: token $PAT" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
-          asset_url_arm=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM.tar.gz") | .browser_download_url')
-          asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "RasPyCam-ARM64.tar.gz") | .browser_download_url')
-          curl -L -o RasPyCam-ARM.tar.gz -H "Authorization: token $PAT" "$asset_url_arm"
-          curl -L -o RasPyCam-ARM64.tar.gz -H "Authorization: token $PAT" "$asset_url_arm64"
+          asset_url_arm=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-arm.tar.gz") | .browser_download_url')
+          asset_url_arm64=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam-arm64.tar.gz") | .browser_download_url')
+          curl -L -o raspycam-arm.tar.gz -H "Authorization: token $PAT" "$asset_url_arm"
+          curl -L -o raspycam-arm64.tar.gz -H "Authorization: token $PAT" "$asset_url_arm64"
 
       - name: Uncompress downloaded executables
         run: |
           mkdir raspycam_unzipped
-          tar -xzf RasPyCam-ARM.tar.gz -C raspycam_unzipped
-          tar -xzf RasPyCam-ARM64.tar.gz -C raspycam_unzipped
+          tar -xzf raspycam-arm.tar.gz -C raspycam_unzipped
+          tar -xzf raspycam-arm64.tar.gz -C raspycam_unzipped
 
       - name: Sync fork with upstream and delete old branches
         env:
@@ -133,8 +133,8 @@ jobs:
       - name: Move executables to target directory
         run: |
             mkdir -p rpi_cam_web_interface/etc/raspycam
-            mv raspycam_unzipped/RasPyCam-ARM rpi_cam_web_interface/etc/raspycam/arm
-            mv raspycam_unzipped/RasPyCam-ARM64 rpi_cam_web_interface/etc/raspycam/arm64
+            mv raspycam_unzipped/raspycam-arm rpi_cam_web_interface/etc/raspycam/arm
+            mv raspycam_unzipped/raspycam-arm64 rpi_cam_web_interface/etc/raspycam/arm64
 
       - name: Stage, Commit, and Push Changes
         id: commit_changes
@@ -208,4 +208,4 @@ jobs:
 
       - name: Clean up
         run: |
-          rm -rf raspycam_unzipped RasPyCam-ARM.tar.gz RasPyCam-ARM64.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
+          rm -rf raspycam_unzipped raspycam-arm.tar.gz raspycam-arm64.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
