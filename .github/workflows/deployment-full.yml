@@ -1,0 +1,158 @@
+name: Deployment (Full Release)
+
+permissions:
+  contents: write
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  pull_request:
+    name: Full Release
+    runs-on: pi-five
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+
+      - name: Download executable from release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/kaihokori/raspycam/releases/latest)
+          asset_url=$(echo "$release_response" | jq -r '.assets[] | select(.name == "raspycam.tar.gz") | .browser_download_url')
+          curl -L -o raspycam.tar.gz -H "Authorization: token $GITHUB_TOKEN" "$asset_url"
+          
+      - name: Uncompress downloaded executable
+        run: |
+          mkdir raspycam_unzipped
+          tar -xzf raspycam.tar.gz -C raspycam_unzipped
+          
+      - name: Sync fork with upstream and delete old branches
+        env:
+          PAT: ${{ secrets.PAT }}
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
+        run: |
+          git clone https://x-access-token:$PAT@github.com/$FORKED_REPO.git rpi_cam_web_interface
+          cd rpi_cam_web_interface
+          
+          git fetch https://github.com/$SOURCE_REPO.git master
+          git checkout master
+          git merge FETCH_HEAD
+          
+          git branch -r | grep -v "master" | grep -v "\->" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
+          
+          git push origin master --force
+
+      - name: Clear Git cache
+        run: |
+          git rm -r --cached .
+          git reset --hard
+
+      - name: Sync fork with upstream using GitHub CLI
+        env:
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          cd rpi_cam_web_interface
+          git clone --filter=blob:none --no-checkout https://github.com/$FORKED_REPO.git
+          cd rpi_cam_web_interface
+          git sparse-checkout init --cone
+          git sparse-checkout set etc/raspycam
+
+      - name: Create new branch for update
+        run: |
+          git checkout -b update-raspycam-${{ github.event.release.tag_name }}
+
+      - name: Resetting target directory
+        run: |
+          if [ -d "etc/raspycam" ]; then
+            git checkout HEAD -- etc/raspycam
+          else
+            echo "Directory etc/raspycam does not exist, skipping reset."
+          fi
+
+      - name: Move executable to target directory
+        run: |
+          mkdir -p rpi_cam_web_interface/etc/raspycam/
+          cp -r raspycam_unzipped/raspycam/* rpi_cam_web_interface/etc/raspycam/
+
+      - name: Stage, Commit, and Push Changes
+        id: commit_changes
+        env:
+          PAT: ${{ secrets.PAT }}
+          FORKED_REPO: ${{ vars.FORKED_REPO }}
+        run: |
+          cd rpi_cam_web_interface
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+          git add etc/raspycam
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit, exiting."
+            echo "changes_made=false" >> $GITHUB_ENV
+            exit 0
+          else
+            git commit -m "Updating RasPyCam to ${{ github.event.release.tag_name }}"
+            git remote set-url origin https://x-access-token:$PAT@github.com/$FORKED_REPO.git
+            git branch -M update-raspycam-${{ github.event.release.tag_name }}
+            git push --set-upstream origin update-raspycam-${{ github.event.release.tag_name }}
+            echo "changes_made=true" >> $GITHUB_ENV
+          fi
+
+      - name: Fetch Release Notes
+        if: env.changes_made == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_URL="https://api.github.com/repos/kaihokori/raspycam/releases/tags/${{ github.event.release.tag_name }}"
+          curl -s -H "Authorization: token $GITHUB_TOKEN" $RELEASE_URL | jq -r '.body' > release_notes.txt
+          tail -n +2 release_notes.txt > release_notes_trimmed.txt
+
+      - name: Create PR body file
+        if: env.changes_made == 'true'
+        run: |
+          echo "# Release Summary" > pr_body.txt
+          echo "" >> pr_body.txt
+          echo "This PR updates the RasPyCam executable to the latest version \`${{ github.event.release.tag_name }}\`, generated from the [RasPyCam](https://github.com/kaihokori/raspycam) repository." >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Changes Introduced" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "1. **Change X:**" >> pr_body.txt
+          echo "   - [Text]" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Additional Notes" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "- **Manual Usage**: If you want to test the application manually, please follow the instructions provided in the [RasPyCam](https://github.com/kaihokori/raspycam) README." >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "## Changelog" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "The following is extracted from the official release notes of RasPyCam version \`${{ github.event.release.tag_name }}\` accessible [here](https://github.com/kaihokori/RasPyCam/releases/tag/${{ github.event.release.tag_name }}):" >> pr_body.txt
+          echo "" >> pr_body.txt
+          echo "" >> pr_body.txt
+          cat release_notes_trimmed.txt >> pr_body.txt
+          echo "" >> pr_body.txt
+
+      - name: Create Draft Pull Request
+        if: env.changes_made == 'true'
+        env:
+          PAT: ${{ secrets.PAT }}
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
+        run: |
+          gh auth login --with-token <<< "$PAT"
+          gh pr create \
+            --title "Update RasPyCam to ${{ github.event.release.tag_name }}" \
+            --body-file pr_body.txt \
+            --base master \
+            --head "kaihokori:update-raspycam-${{ github.event.release.tag_name }}" \
+            --repo $SOURCE_REPO \
+            --draft
+
+      - name: Clean up
+        run: |
+          rm -rf raspycam_unzipped raspycam.tar.gz rpi_cam_web_interface pr_body.txt release_notes.txt release_notes_trimmed.txt
