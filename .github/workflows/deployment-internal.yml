@@ -210,7 +210,7 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-          pyinstaller raspycam-arm.spec
+          pyinstaller raspycam-arm64.spec
   
       - name: Archive build artifacts
         run: |
