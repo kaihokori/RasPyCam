@@ -1,4 +1,4 @@
-name: Deployment (Partial Release)
+name: Deployment (Internal)
 
 permissions:
   contents: write
@@ -46,6 +46,10 @@ jobs:
         run: |
           git rm -r --cached .
           git reset --hard
+
+      - name: Install jq
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
 
       - name: Delete all draft releases and their tags
         env:
