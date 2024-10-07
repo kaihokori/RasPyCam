@@ -34,7 +34,11 @@ jobs:
       - name: Check ARM Runner
         id: check_arm
         run: |
-          arm_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "arm") | .status == "online") then "true" else "false" end // "false"' runners.json)
+          if [ ! -s runners.json ]; then
+            arm_online="false"
+          else
+            arm_online=$(jq -r 'if (.runners[] | select(.labels[] | .name == "arm") | .status == "online") then "true" else "false" end // "false"' runners.json)
+          fi
           echo "arm_online=$arm_online" >> $GITHUB_ENV
 
       - name: Set Outputs
@@ -44,7 +48,7 @@ jobs:
 
       - name: Echo Runner Statuses
         run: |
-          echo "ARM Runner Online: ${{ env.chen_don_online }}"
+          echo "ARM Runner Online: ${{ env.arm_online }}"
 
   format:
     if: github.event_name == 'push'
