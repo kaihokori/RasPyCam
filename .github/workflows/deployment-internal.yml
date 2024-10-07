@@ -100,7 +100,7 @@ jobs:
       - name: Archive build artifacts
         run: |
           mkdir -p release
-          tar -czvf release/raspycam.tar.gz -C dist raspycam-arm64
+          tar -czvf release/raspycam.tar.gz -C dist raspycam
 
       - name: Generate GitHub draft release
         id: create_release
