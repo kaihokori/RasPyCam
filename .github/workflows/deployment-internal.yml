@@ -28,12 +28,14 @@ jobs:
           git remote add bitbucket https://${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}@bitbucket.org/$BITBUCKET_REPO.git
           git push bitbucket --all --force
           git push bitbucket --tags --force
+
       - name: Clean up machine
         if: always()
         run: |
           git remote remove bitbucket
           git reset --hard
           git clean -fdx
+
   release-cleanup:
     name: Release Cleanup
     runs-on: ARM64
@@ -153,6 +155,7 @@ jobs:
     name: Executable (ARM)
     runs-on: ARM64  # Change this to ARM when the runner is set up
     needs: release
+    if: false
     steps:
       - name: Create modified spec file
         run: |
@@ -207,7 +210,7 @@ jobs:
           pip install rpi-libcamera --config-settings="-Dversion=unknown"
           pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
-          pyinstaller raspycam-arm.spec
+          pyinstaller raspycam-arm64.spec
   
       - name: Archive build artifacts
         run: |
