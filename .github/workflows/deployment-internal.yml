@@ -108,6 +108,7 @@ jobs:
   release:
     name: Release
     runs-on: ARM64
+    needs: release-cleaup
     steps:
       - name: Create new tag
         run: |
@@ -149,6 +150,7 @@ jobs:
   executable-arm:
     name: Executable (ARM)
     runs-on: ARM64  # Change this to ARM when the runner is set up
+    needs: release
     steps:
       - name: Create modified spec file
         run: |
@@ -208,6 +210,7 @@ jobs:
   executable-arm64:
     name: Executable (ARM64)
     runs-on: ARM64
+    needs: release
     steps:
       - name: Create modified spec file
         run: |
