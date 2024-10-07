@@ -12,7 +12,7 @@ jobs:
   check-runners:
     if: github.event_name == 'push'
     name: Check Runners
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Placeholder
         run: |
@@ -21,7 +21,7 @@ jobs:
   format:
     if: github.event_name == 'push'
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Placeholder
         run: |
@@ -29,7 +29,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: format
     steps:
       - name: Placeholder
@@ -38,7 +38,7 @@ jobs:
 
   test-five:
     name: Test (Pi 5)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: lint
     steps:
       - name: Placeholder
@@ -47,7 +47,7 @@ jobs:
 
   test-four:
     name: Test (Pi 4)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [lint, check-runners]
     steps:
       - name: Placeholder
@@ -56,7 +56,7 @@ jobs:
 
   test-three-b:
     name: Test (Pi 3B)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [lint, check-runners]
     steps:
       - name: Placeholder
@@ -65,7 +65,7 @@ jobs:
 
   test-two-w:
     name: Test (Pi Zero 2W)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [lint, check-runners]
     steps:
       - name: Placeholder

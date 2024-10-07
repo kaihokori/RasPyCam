@@ -11,8 +11,38 @@ on:
 jobs:
   coverage:
     name: Coverage Report
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Placeholder
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies for coverage
         run: |
-          echo "Placeholder"
+          sudo apt update
+          sudo apt install libcap-dev python3-pytest libopencv-dev python3-pytest-cov -y
+
+      - name: Run pytest and generate coverage report
+        run: |
+          PYTHONPATH=./app pytest --import-mode=importlib --cov=app --cov-report=term --cov-report=xml:coverage.xml --cov-config=tests/.coveragerc  --cov-fail-under=95
+        timeout-minutes: 5
+
+      - name: Save coverage report
+        run: |
+          mkdir -p coverage
+          cp coverage.xml coverage/coverage.xml
+
+      - name: Generate and Comment Coverage Report
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./coverage/coverage.xml
+          pytest-xml-coverage-path: ./coverage/coverage.xml
+          title: Coverage Report
+          badge-title: Coverage
+          hide-badge: false
+          hide-report: false
+          create-new-comment: true
+          hide-comment: false
+          report-only-changed-files: false
+          remove-link-from-badge: true
