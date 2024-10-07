@@ -136,7 +136,7 @@ jobs:
               "generate_release_notes": true
             }')
           echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//' > upload_url
-    
+
       - name: Save upload URL and new tag as artifacts
         uses: actions/upload-artifact@v4
         with:
