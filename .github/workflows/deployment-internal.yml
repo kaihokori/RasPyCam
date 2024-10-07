@@ -28,12 +28,14 @@ jobs:
           git remote add bitbucket https://${BITBUCKET_USERNAME}:${BITBUCKET_PASSWORD}@bitbucket.org/$BITBUCKET_REPO.git
           git push bitbucket --all --force
           git push bitbucket --tags --force
+
       - name: Clean up machine
         if: always()
         run: |
           git remote remove bitbucket
           git reset --hard
           git clean -fdx
+
   release-cleanup:
     name: Release Cleanup
     runs-on: ARM64
