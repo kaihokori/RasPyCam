@@ -20,7 +20,7 @@ def on_sigint_sigterm(sig, frame):
         sig: Signal number.
         frame: Current stack frame.
     """
-    print("Received signal: ")
+    print("Received signalasdasd: ")
     print(sig)
     CameraCoreModel.process_running = False
 
