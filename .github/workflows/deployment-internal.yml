@@ -163,10 +163,15 @@ jobs:
   
       - name: Set up dependencies and build executable
         run: |
+          sudo apt install libcap-dev libatlas-base-dev ffmpeg libopenjp2-7
+          sudo apt install libcamera-dev
+          sudo apt install libkms++-dev libfmt-dev libdrm-dev
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
-          pip install rpi-libcamera rpi-kms picamera2 opencv-python
+          pip install wheel
+          pip install rpi-libcamera -C setup-args="-Dversion=unknown"
+          pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
           pyinstaller raspycam.spec
   
@@ -202,10 +207,15 @@ jobs:
 
       - name: Set up dependencies and build executable
         run: |
+          sudo apt install libcap-dev libatlas-base-dev ffmpeg libopenjp2-7
+          sudo apt install libcamera-dev
+          sudo apt install libkms++-dev libfmt-dev libdrm-dev
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
-          pip install rpi-libcamera rpi-kms picamera2 opencv-python
+          pip install wheel
+          pip install rpi-libcamera -C setup-args="-Dversion=unknown"
+          pip install rpi-kms picamera2 opencv-python
           pip install pyinstaller
           pyinstaller raspycam.spec
 
