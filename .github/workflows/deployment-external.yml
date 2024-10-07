@@ -140,8 +140,8 @@ jobs:
             ls raspycam_unzipped
             ls raspycam_unzipped/arm/raspycam
             rm -rf rpi_cam_web_interface/etc/raspycam
-            mv raspycam_unzipped/arm/raspycam/raspycam rpi_cam_web_interface/etc/raspycam/arm/
-            mv raspycam_unzipped/arm64/raspycam/raspycam rpi_cam_web_interface/etc/raspycam/arm64/
+            mv raspycam_unzipped/arm/raspycam rpi_cam_web_interface/etc/raspycam/arm/
+            mv raspycam_unzipped/arm64/raspycam rpi_cam_web_interface/etc/raspycam/arm64/
 
 
       - name: Stage, Commit, and Push Changes
